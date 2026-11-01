@@ -5,8 +5,8 @@ A visitor can use the parts of your app that need an account, such as chat, priv
 
 The account lives while a page holds its session and is deleted 30 minutes after the visitor leaves.
 
-:::warning Turn it on first
-Anonymous login is off until the project owner turns on **Anonymous Login** in [Project Settings](/service-settings/service-settings.md#anonymous-login).
+:::warning Check the setting first
+A project created from skapi.com starts with **Anonymous Login** on; a project created from bunnyquery.com, starts with it off. The owner turns it on or off in [Project Settings](/service-settings/service-settings.md#anonymous-login).
 While it is off, `anonymousLogin()` fails with `INVALID_REQUEST` and `Anonymous login is not enabled for this service.`
 It works whether or not **Allow Signup** is on, so a project can close signups and still let visitors in anonymously.
 :::

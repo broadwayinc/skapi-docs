@@ -17,7 +17,7 @@ Admins keep managing users, records, files, invitations, newsletters and notific
   When this option is off, only admins can create or disable user accounts from the **Users** page. This is useful for private projects with a limited user group.
 
 - **Anonymous Login:**
-  When on, visitors can sign in with a temporary anonymous account through [`anonymousLogin()`](/api-reference/authentication/README.md#anonymouslogin), deleted 30 minutes after they leave. Off by default, and independent of **Allow Signup**. See [Anonymous Login](/authentication/anonymous-login.md).
+  When on, visitors can sign in with a temporary anonymous account through [`anonymousLogin()`](/api-reference/authentication/README.md#anonymouslogin), deleted 30 minutes after they leave. On by default, and independent of **Allow Signup**. See [Anonymous Login](/authentication/anonymous-login.md).
 
 - **Allow Inquiries:**
   You can allow anonymous users to send inquiries to your project via [`sendInquiry()`](/api-reference/email/README.md#sendinquiry).

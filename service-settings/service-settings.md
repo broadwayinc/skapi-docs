@@ -69,7 +69,7 @@ When this is on, visitors can sign in with a temporary anonymous account through
 The account lives while a page holds its session and is deleted 30 minutes after the visitor leaves, with everything it owns.
 See [Anonymous Login](/authentication/anonymous-login.md).
 
-It is off until you turn it on. While it is off, `anonymousLogin()` fails with `INVALID_REQUEST` and `Anonymous login is not enabled for this service.`
+A project created from skapi.com starts with it on; a project created from bunnyquery.com, starts with it off. While it is off, `anonymousLogin()` fails with `INVALID_REQUEST` and `Anonymous login is not enabled for this service.`
 
 It does not depend on **Allow Signup**: a project can close signups and still let visitors in anonymously.
 It is unrelated to **Prevent Anonymous** below, which is about visitors **without** an account writing public records.
