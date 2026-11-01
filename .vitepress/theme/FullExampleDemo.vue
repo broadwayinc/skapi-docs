@@ -14,7 +14,7 @@ const props = defineProps<{
   label?: string
 }>()
 
-const BASE = 'https://cdn.broadwayinc.com/temp/v9/'
+const BASE = 'https://cdn.broadwayinc.com/temp/v10/'
 const KEY = 'skapi-docs:project-id'
 const pid = ref('')
 
