@@ -42,6 +42,8 @@ Example above shows how to send realtime data to a user with an id: 'recipient_u
 -   `recipient`: The user ID of the recipient or the name of the group the user have joined.
 -   `notification`: Notification to send with the realtime message, or notification to use when user is not connected to realtime. See [`Sending Notifications`](/notification/send-notifications.html#sending-notifications)
 
+A message can be at most 32 KB including its headers; a bigger one is refused with `INVALID_PARAMETER` before it is sent.
+
 When the message is sent successfully, the method will return the following object:
 
 ```ts

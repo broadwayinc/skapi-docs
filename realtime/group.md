@@ -90,6 +90,31 @@ let RealtimeCallback = (rt) => {
 skapi.connectRealtime(RealtimeCallback);
 ```
 
+### Busy Groups
+
+When a group is both big and busy, the server sends its messages together to save traffic. This starts when the number of members times the messages sent in the same second goes over 500, for example 300 members and 2 messages in one second, or 10 members and 51 messages.
+
+- The first message goes out at once. The ones that follow are held for a moment and sent together. The wait is 1 second for every 2,000 members, and at least a tenth of a second: 100 milliseconds in a group of up to 200 members, 1 second at 2,000, 5 seconds at 10,000.
+- Your callback still receives each message on its own, in the order they were sent, with the same `type`, `message`, `sender`, `sender_cid` and `sender_rid`. Nothing in your code needs to change.
+- A group under that line is never held, so a small group that sends now and then gets every message at once, as before.
+- SDK versions before 2.2.23 cannot read grouped messages. They keep receiving each message on its own.
+
+Join and leave notices (`USER_JOINED`, `USER_LEFT`, `USER_DISCONNECTED`) are grouped the same way when several come close in time: the first one goes out at once, the ones that follow within 1 second (5 seconds in a group of 1,000 members or more, longer above 10,000) together. Your callback still receives one `notice` per join or leave, in order.
+
+### Sending Often
+
+A page that posts to its group faster than ten times a second (a game sending on every tick, a drawing board on every mouse move) has its messages gathered by the SDK for up to 100 milliseconds and sent as one. Every member still receives each message on its own, in order. A message sent 100 milliseconds or more after the one before goes at once, so a chat never waits. A message with a notification is never gathered.
+
+Each send is one request to the service and one message to every member, so this is where the cost of a fast app is decided: a page that sends 120 times a second costs about as much as one that sends 10 times a second.
+
+For a fast game, send only what changed, and consider a [WebRTC data channel](/realtime/webRTC.md) between the players for the gameplay itself: it goes straight from one browser to the other, with no message fee and the lowest delay, while the realtime group carries the lobby, the chat and who is there.
+
+### Message Order
+
+Messages of one sender reach every member in the order they were sent. Two messages sent quickly can travel different paths through the service; the SDK numbers them and puts them back in order on arrival. A message that does not arrive within 1.5 seconds no longer holds back the ones after it. Messages from different senders have no fixed order between them.
+
+A member's first message after joining is sent once the group has heard that they joined (at most 3 seconds later), so nobody receives a message from someone who is not in their list yet. The sender receives their own group messages too; a page that shows them as they are typed should skip the ones whose `sender` is the current user.
+
 ### [`postRealtime(message, recipient, notification?): Promise<{ type: 'success', message: string }>`](/api-reference/realtime/README.md#postrealtime)
 
 :::warning
@@ -180,5 +205,7 @@ skapi
 
 For more detailed information on all the parameters and options available with the [`getRealtimeUsers()`](/api-reference/realtime/README.md#getrealtimeusers) method,
 please refer to the API Reference below:
+
+The list is what the service knows at that moment. A member whose connection broke without closing (a cable pulled, a phone that died) can stay listed for up to 10 minutes, unless a message is sent to them or they connect again, which removes the old entry at once. A page that must know who is really there should also watch the `notice` events and treat a member who has not been heard from as away.
 
 ### [`getRealtimeUsers(params?, fetchOptions?): Promise<DatabaseResponse<{ user_id:string; cid:string; }[]>>`](/api-reference/realtime/README.md#getrealtimeusers)

@@ -48,7 +48,7 @@ When the callback runs, it receives a message object with the following properti
 
 -   `type` Shows the type of the received message as below:
 
-    -   "message": When there is data broadcasted from the realtime group.
+    -   "message": When there is data broadcasted from the realtime group. In a group that is both big and busy, messages can arrive a moment late and several at once; each still comes as its own "message". See [Busy Groups](/realtime/group.md#busy-groups).
 
     -   "error": When there is an error. Usually websocket connection has an error and will be disconnected.
 
@@ -56,7 +56,7 @@ When the callback runs, it receives a message object with the following properti
 
     -   "close": When the connection is intentionally closed by the user.
 
-    -   "notice": When there is a notice. Usually notice users when the user in a realtime group has joined, left, or being disconnected.
+    -   "notice": When there is a notice. Usually notice users when the user in a realtime group has joined, left, or being disconnected. When several users join or leave close in time, their notices can arrive a few seconds late and several at once; each still comes as its own "notice", and a disconnect is still `USER_DISCONNECTED` followed by `USER_LEFT`.
 
     -   "private": When there is private data transfer between the users.
 
@@ -76,6 +76,10 @@ When the callback runs, it receives a message object with the following properti
 ## Staying Connected
 
 A connection that closes on its own (the network dropped, the device slept) is reopened by the SDK without any call from your code: the first attempt 3 seconds later, then after 6, 12 and 24 seconds, then every 30 seconds, for as long as the page is open and the user is signed in, and at once when the user returns to the tab. The group the user was in is joined again by itself. The user stays signed in through the outage: a token refresh that gets no answer leaves the session as it is (see [Auto Login](/authentication/login-logout.md#auto-login)).
+
+A connection that dies without closing (a phone that moves between networks, a laptop that wakes from sleep) is caught too. The SDK checks the connection once a minute, and at once when the user returns to the tab or the network comes back. The server answers each check, and any message from the server counts as an answer too. Ten seconds with neither after a check counts as a drop, and the connection is reopened as above.
+
+The service closes every connection two hours after it opened. The SDK opens a fresh connection a few minutes before that and switches to it, joining the group again, so nothing is lost and your callback hears nothing about it. The waits before reconnect attempts vary a little from client to client, so a service that comes back after an outage is not hit by every client in the same second.
 
 Your callback hears about it, so the page can say what is going on:
 
