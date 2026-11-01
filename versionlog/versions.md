@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.23
+### Current version: 2.2.24
+
+**2.2.24**
+
+- Fixed: **a call that was up when the realtime connection was renewed lost its signaling.** Since 2.2.23 the SDK opens a fresh realtime connection a few minutes before the service's two-hour limit and switches to it. The other side of a WebRTC call was not told about the new connection id, so from that moment its signals (a hang-up, a track added or removed, an ICE restart after a network change) went to the old connection and never arrived: the call itself went on, but ending it or recovering it no longer worked from that side. The renewal happens about 1 hour 53 to 55 minutes after the page connected, so any call running at that moment was affected, not only long ones. 2.2.24 announces the new connection to the other side at the renewal, as it already did after a dropped connection (the other side gets `cidchange`). Update from 2.2.23 if your app uses calls. See [A dropped connection](/realtime/webRTC.md#a-dropped-connection).
 
 **2.2.23**
 
