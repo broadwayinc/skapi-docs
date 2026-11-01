@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Skapi"
-  text: "Serverless. Lightweight. Instant."
+  text: "Instant Serverless Backend\nfor Web Apps"
   tagline: "Everything your web application needs from a backend, without managing servers or infrastructure."
   
   actions:
