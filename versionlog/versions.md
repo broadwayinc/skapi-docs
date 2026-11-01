@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.24
+### Current version: 2.2.25
+
+**2.2.25**
+
+- **The voice before the picture on a thin connection.** `encoding.audio` and `encoding.video` take **`priority`** (`'very-low'`, `'low'`, `'medium'` or `'high'`), the browser's own sender priority: when the bandwidth is short it lowers the lower priority first. `audio: { priority: 'high' }, video: { priority: 'low' }` keeps the voice whole while the picture gets blurry, where a browser would otherwise treat both the same. Applied with the other `encoding` settings to every track of the kind, now and when one is added later. See [What goes first on a thin connection](/realtime/webRTC.md#what-goes-first-on-a-thin-connection).
 
 **2.2.24**
 

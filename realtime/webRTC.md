@@ -213,7 +213,7 @@ skapi.joinRealtime({ group: 'RTCCall' }); // Join a Realtime group
 | `media` | What this side sends. An object `{ audio, video, screen }`: the microphone, the camera and the screen, each `true`, `false`, or the browser's own constraints (`video: { facingMode: 'environment' }`, `screen: { contentHint: 'text' }`). `audio` and `video` may also be a `MediaStreamTrack` the page holds already, sent as the microphone or the camera without a new capture: a page that shows a camera preview before the call passes `track.clone()` and the browser does not ask for permission a second time (hanging up stops every track on the call, hence the clone). Or a `MediaStream` of your own, sent as it is: a canvas, a mixed or processed stream. Omitted, or everything false: no media at all. A data channel is enough for a connection. |
 | `receive` | A kind you want to get without sending it: `{ video: true }` for a viewer with no camera. Without it a track the other side adds later still arrives, after a renegotiation. |
 | `channels` | The data channels this side opens: preset names, or `RTCDataChannelInit` with `protocol` as the label. The caller opens `default` when the option is omitted; the answering side opens none. |
-| `encoding` | The codec order and the limits of what this side sends: `maxBitrate`, `maxFramerate`, `scaleResolutionDownBy`. |
+| `encoding` | The codec order, the limits and the priority of what this side sends: `maxBitrate`, `maxFramerate`, `scaleResolutionDownBy`, and `priority`, which decides what the browser trims first when the bandwidth is short. See [Codecs and bitrate](#codecs-and-bitrate). |
 | `meta` | Caller only. A small JSON object the other side gets on its `rtc:incoming` message before it answers: what the call is about, in your own words. |
 | `ringTimeout` | Caller only. Milliseconds to wait for an answer. Nothing by default. |
 | `ice`, `icePolicy` | The servers the connection goes through. See [The relay](#the-relay). |
@@ -442,6 +442,23 @@ skapi.connectRTC({
 ```
 
 Codec names are matched against what the browser can decode (`'VP9'`, `'H264'`, `'AV1'`, or a mime type such as `'video/VP9'`); a name the browser does not have is skipped. The type is [RTCEncodingOption](/api-reference/data-types/README.md#rtcencodingoption).
+
+### What goes first on a thin connection
+
+When the network cannot carry everything, the browser lowers what it sends, and `priority` tells it what to lower first: `'very-low'`, `'low'`, `'medium'` or `'high'`, per kind. A browser treats every track the same by default. For a conversation the voice matters more than the picture, so give the audio `'high'` and the video `'low'`: the picture gets blurry, then slow, before the voice is touched.
+
+```js
+skapi.connectRTC({
+    cid,
+    media: { audio: true, video: true },
+    encoding: {
+        audio: { priority: 'high' },
+        video: { priority: 'low' }
+    }
+}, RTCCallback);
+```
+
+This is how the browser splits the bandwidth it has; it cannot bring back packets a bad connection drops, which is what a voice that breaks up on a very poor network is. A bad connection no longer ends a call, see [A dropped connection](#a-dropped-connection).
 
 ## Ringing, rejecting and timing out
 
