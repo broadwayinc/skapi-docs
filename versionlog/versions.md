@@ -1,6 +1,14 @@
 # Version History
 
-### Current version: 2.2.26
+### Current version: 2.2.28
+
+**2.2.28**
+
+- **The other project ID errors say "Project ID" too.** `new Skapi()` with no project ID now throws (and alerts) "Project ID is required." instead of "Service ID is required.", and a project ID that cannot be read throws "Project ID is invalid." instead of "Service ID is invalid.". The code stays `INVALID_PARAMETER` for both, so a page that checks `err.code` needs no change.
+
+**2.2.27**
+
+- **A clearer error for a wrong project ID.** When `new Skapi()` is given a project ID that does not exist, the error (code `NOT_EXISTS`) now reads "The project ID does not exist. Create your project from skapi.com" instead of "Service does not exist. Create your service from skapi.com". The code is unchanged, so a page that checks `err.code` needs no change.
 
 **2.2.26**
 
