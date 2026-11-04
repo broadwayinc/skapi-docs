@@ -30,14 +30,15 @@ A page can tell whether anonymous login is on before any call: [`getConnectionIn
 
 ## How long the account lives
 
-The SDK keeps the account alive while a page holds its session: it sends a keep-alive every 10 minutes, and once more when a page load restores the session from storage.
+The SDK keeps the account alive while a page holds its session: it sends a keep-alive every 10 minutes, once more when a page load restores the session from storage, and once more when the page comes back after a while (visible again, back online, or restored from the browser's back-forward cache).
 The account is deleted 30 minutes after the last keep-alive, which happens 30 to 40 minutes after the visitor closed the last page holding the session.
 
 So:
 
 - Reloading the page or opening it again within 30 minutes keeps the account and its data. The session is restored from the browser's storage, as for any login.
-- A tab in the background keeps its account: browsers slow a background tab's timers, but not below the 10-minute beat.
-- A laptop asleep for an hour comes back to a deleted account. The next keep-alive learns this, signs the page out (`skapi.user` becomes `null` and the login listeners run with `null`), and the page can call `anonymousLogin()` again for a new account.
+- A tab in the background on a computer keeps its account: browsers slow a background tab's timers, but not below the 10-minute beat.
+- A phone is different: it freezes a page in the background completely, so no keep-alive goes out. A visitor who switches to another app for more than half an hour comes back to a deleted account, with the page still open. So does a laptop asleep for an hour.
+- The SDK finds out as soon as the page comes back: the keep-alive it sends then learns that the account is gone and signs the page out (`skapi.user` becomes `null` and the login listeners run with `null`). A realtime connection that the server refuses to reopen for the account is checked the same way. The page can then call `anonymousLogin()` again for a new account; see [Coming back to a deleted account](#coming-back-to-a-deleted-account).
 
 To know before the page acts, await [`verifyAnonymousSession()`](/api-reference/authentication/README.md#verifyanonymoussession) on load.
 It waits for that first keep-alive and resolves with the profile, or with `null` once the account is gone, so the page can make a fresh account instead of failing its first request:
@@ -51,6 +52,23 @@ await skapi.connectRealtime(handler);
 ```
 
 For a signed-in or a signed-out session it simply resolves with the current profile, so the same lines are safe on every page.
+
+### Coming back to a deleted account
+
+A page that stays open (a call, a chat) needs one listener to survive the case above: when the session ends without the visitor logging out, make a new account and reconnect. The new account has a new `user_id`, so the others in a realtime group see the visitor leave and come back.
+
+```js
+let leaving = false; // set it before your own logout(), so the listener leaves that one alone
+
+skapi.onLogin = async (user) => {
+    if (user || leaving) return;
+    // the temporary account was deleted while the page was away
+    await skapi.closeRealtime();
+    await skapi.anonymousLogin(); // throws while the network is still down: try again a little later
+    await skapi.connectRealtime(handler);
+    await skapi.joinRealtime({ group: 'room-1' });
+};
+```
 
 [`logout()`](/api-reference/authentication/README.md#logout) deletes an anonymous account at once. So does [`signup()`](/api-reference/authentication/README.md#signup), which logs out before it creates the new account.
 [`login()`](/api-reference/authentication/README.md#login) and [`openIdLogin()`](/api-reference/authentication/README.md#openidlogin) replace the session without a logout; the anonymous account they leave behind is deleted 30 minutes later.

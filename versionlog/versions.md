@@ -1,6 +1,11 @@
 # Version History
 
-### Current version: 2.2.25
+### Current version: 2.2.26
+
+**2.2.26**
+
+- **A temporary account that expired while the page was away is noticed at once.** A phone freezes a background page, so no keep-alive goes out and an [anonymous account](/authentication/anonymous-login.md) is deleted half an hour later while the page stays open. The SDK used to learn it only at its next keep-alive, up to 10 minutes after the visitor came back, and the realtime connection kept trying to reopen with the deleted account meanwhile. Now the account is checked as soon as the page is visible again, back online or restored from the back-forward cache (when it was last confirmed over a minute ago), and whenever the server refuses to reopen the realtime connection. A deleted account signs the page out at once: `skapi.user` becomes `null`, the login listeners run with `null`, the realtime attempts stop, and the page can call `anonymousLogin()` for a new account. See [Coming back to a deleted account](/authentication/anonymous-login.md#coming-back-to-a-deleted-account).
+- Fixed: `closeRealtime()` could reject when the last reconnect attempt had failed, and a reconnect scheduled before it could still start after it.
 
 **2.2.25**
 
