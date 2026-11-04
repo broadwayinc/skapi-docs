@@ -85,7 +85,7 @@ unchanged when the user accepts. Accepting only activates the account and marks 
 |
 {
   code: 'EXISTS';
-  message: 'E-mail "user@email.com" is already a login ID in this service.' | 'Username "jane@email.com" is already a login ID in this service.' | "The login ID is already used by another account in this service.";
+  message: 'E-mail "user@email.com" is already a login ID in this project.' | 'Username "jane@email.com" is already a login ID in this project.' | "The login ID is already used by another account in this service.";
   // Any invitation without 'openid_id'. Which message, and exactly when, is listed below.
 }
 |
@@ -100,13 +100,13 @@ email, and refused with `User is already invited.` when there is one: an invitat
 accepted, cancelled or expired, sent to an account whose email is still that address. After that,
 every invitation without `openid_id` is checked before the account is created:
 
-- **Without `username`**, it is refused with `E-mail "user@email.com" is already a login ID in this service.`
+- **Without `username`**, it is refused with `E-mail "user@email.com" is already a login ID in this project.`
   when the email is a login ID another account was **granted** through its email login: an address that
   account has verified. An email that is another account's original login ID (its `username`, or the
   email it was created with when it has none) is a duplicate instead and gives `User is already invited.`
 - **With `username`**, it is refused with the same `E-mail` error when the email is a login ID another
   account was granted in any way: as that account's original login ID, or as an address it has verified.
-  It is refused with `Username "jane@email.com" is already a login ID in this service.` when the
+  It is refused with `Username "jane@email.com" is already a login ID in this project.` when the
   `username` is such an address, which only an e-mail address can be, so a `username`
   such as `jane_doe` never gets this error. A `username` that another account was created or invited
   with gives `User is already invited.`
@@ -118,7 +118,7 @@ invitation goes out. See [Login IDs](/admin/permissions.md#login-ids).
 These checks are lookups made just before the account is created, not reservations: two invitations
 for the same email sent at the same moment can both pass them. The account creation itself checks the
 invitation's own login ID once more, and refuses one that already logs another account in through its
-email login with `E-mail "user@email.com" is already a login ID in this service.` (without `username`) or
+email login with `E-mail "user@email.com" is already a login ID in this project.` (without `username`) or
 `The login ID is already used by another account in this service.` (with `username`). When a check
 cannot get an answer in time, the invitation is not refused by it.
 
@@ -138,7 +138,7 @@ is its `username` when it has one, and its email otherwise:
   while the first invitation is pending.
 - **No `username` both times**: `User is already invited.`
 - **A `username` in either invitation, and not the same one**:
-  `E-mail "user@email.com" is already a login ID in this service.`, since the email then logs the first
+  `E-mail "user@email.com" is already a login ID in this project.`, since the email then logs the first
   account in.
 
 To change the `username` of a pending invitation, cancel it with [`cancelInvitation()`](#cancelinvitation)
@@ -298,7 +298,7 @@ See [UserProfile](/api-reference/data-types/README.md#userprofile).
 |
 {
   code: 'EXISTS';
-  message: 'E-mail "user@email.com" is already a login ID in this service.' | 'Username "jane@email.com" is already a login ID in this service.' | "The login ID is already used by another account in this service.";
+  message: 'E-mail "user@email.com" is already a login ID in this project.' | 'Username "jane@email.com" is already a login ID in this project.' | "The login ID is already used by another account in this service.";
   // Any request without 'openid_id'. The same conditions as inviteUser().
 }
 ```
@@ -306,17 +306,17 @@ See [UserProfile](/api-reference/data-types/README.md#userprofile).
 Every request without `openid_id` is checked before the account is created, with the same login ID
 conditions and messages as [`inviteUser()`](#inviteuser):
 
-- **Without `username`**, `E-mail "user@email.com" is already a login ID in this service.` when the email
+- **Without `username`**, `E-mail "user@email.com" is already a login ID in this project.` when the email
   is a login ID another account was granted through its email login, meaning an address that account has
   verified. An email that another account was itself created or invited with, without `username`, is a
   duplicate and gives `User already exists.`
 - **With `username`**, the same `E-mail` error when the email is a login ID another account was granted
-  in any way, and `Username "jane@email.com" is already a login ID in this service.` when the `username`
+  in any way, and `Username "jane@email.com" is already a login ID in this project.` when the `username`
   is an e-mail address another account was granted that way. A `username` that another
   account was created or invited with is a duplicate and gives `User already exists.`
 
 The account creation checks the account's own login ID once more, the same way as for an invitation, and
-refuses it with `E-mail "user@email.com" is already a login ID in this service.` (without `username`) or
+refuses it with `E-mail "user@email.com" is already a login ID in this project.` (without `username`) or
 `The login ID is already used by another account in this service.` (with `username`). Unlike
 `inviteUser()`, `createAccount()` does not check for a pending invitation to the same email.
 
@@ -379,7 +379,7 @@ The update is stored on the account at once and reaches the user's record, which
 |
 {
   code: 'EXISTS';
-  message: 'E-mail "user@email.com" is already a login ID in this service.'; // The new 'email' is already a login ID another account was granted: that account's original login ID (its 'username', or the email it was created with when it has none), or an address it has verified.
+  message: 'E-mail "user@email.com" is already a login ID in this project.'; // The new 'email' is already a login ID another account was granted: that account's original login ID (its 'username', or the email it was created with when it has none), or an address it has verified.
 }
 |
 {

@@ -128,7 +128,11 @@ A file uploaded to a path that already exists replaces the old file.
 
 ### Downloading and deleting files
 
-Tick the files or folders you want. The toolbar counts the selection, and its icons download it as a ZIP file or delete it.
+Tick the files or folders you want. The toolbar counts the selection, and its icons act on it:
+
+- **Download selected** downloads each ticked file on its own, and each ticked folder as its own ZIP file.
+- **Download selected as one .zip** puts everything you ticked into a single ZIP file, folders included with their structure. The server builds it while the toolbar reads **Building zip**, then the download starts. One zip holds up to 2 GB; for more, download in parts.
+- **Delete selected** deletes the selection.
 
 ![The Delete Files confirmation over the file list, with one file and one folder ticked: 1 file and 1 folder will be permanently deleted from your site](/screenshots/hosting-delete.webp)
 

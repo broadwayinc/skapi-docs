@@ -51,9 +51,9 @@ An invitation is refused with `EXISTS` when its email is already a login ID anot
 its own login ID or an address it has verified, for example the verified email of a user who was created
 with a `username`, and, for an invitation with a `username`, also when the email is the login ID another
 account was created with:
-`E-mail "user@email.com" is already a login ID in this service.` A `username` is refused the same way
+`E-mail "user@email.com" is already a login ID in this project.` A `username` is refused the same way
 only when it is an e-mail address another account was granted that way:
-`Username "jane@email.com" is already a login ID in this service.` An email login another account holds
+`Username "jane@email.com" is already a login ID in this project.` An email login another account holds
 without having verified the address blocks nothing: it is removed, that account keeps logging in with the
 login ID it was created with, and the invitation goes out. See
 [Login IDs](/admin/permissions.md#login-ids). While an invitation to an email is

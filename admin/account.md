@@ -126,7 +126,7 @@ it was created with is its own permanent login ID and works from the start. See
 :::
 
 Without a `username`, the request is refused with `EXISTS` and
-`E-mail "user@email.com" is already a login ID in this service.` when the email is already a login ID
+`E-mail "user@email.com" is already a login ID in this project.` when the email is already a login ID
 another account was granted: the address that account logs in with, or an address it has verified.
 An email that another account was itself created or invited with, without a `username`, is the same
 login ID again and gives `User already exists.` instead.
@@ -134,7 +134,7 @@ login ID again and gives `User already exists.` instead.
 With a `username`, the same `E-mail` error is given whenever the email is a login ID another account was
 granted, either as the login ID that account was created or invited with or as its verified email. The
 `username` itself is refused only when it is an e-mail address another account was granted that way
-(`Username "jane@email.com" is already a login ID in this service.`, or
+(`Username "jane@email.com" is already a login ID in this project.`, or
 `The login ID is already used by another account in this service.` when the refusal comes from the check
 made as the account is created). A `username` that another account was already created or invited with
 gives `User already exists.`, for example when the same account is created twice. See the
@@ -253,7 +253,7 @@ call any user makes.
 
 An `email` that is already a login ID another account was granted, as the login ID that account was
 created with or as an address it has verified, is refused with `EXISTS` and
-`E-mail "user@email.com" is already a login ID in this service.`, and nothing in that request is changed.
+`E-mail "user@email.com" is already a login ID in this project.`, and nothing in that request is changed.
 An email login another account holds without having verified the address is removed instead, and your
 request goes through. The server derives the email login from the new address itself.
 A login `username` is permanent: no admin method changes it, and a request that tries to set the login

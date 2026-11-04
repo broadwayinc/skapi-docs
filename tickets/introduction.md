@@ -67,6 +67,16 @@ While a ticket is off:
 
 Switch it on again at any time, and the next call is answered as before. In the list, the dot of the **Status** cell shows the state. An AI agent uses the `enable` and `disable` actions of the MCP server's ticket tool.
 
+### Cancelling queued runs
+
+A queued run is the rest of a chain a Respond left for later, or a call waiting in line for a [concurrency](#one-at-a-time-concurrency) slot. You can cancel queued runs that have not started yet, without switching the ticket off:
+
+- **One run**: on the **Log** tab, open the consumption's **[Details]** and click **Cancel queued run**. If the run already started or finished, you are told so and nothing changes.
+- **Every queued run of a ticket**: on the **Log** tab, click **[Cancel queued]**. It shows when the ticket has runs queued or waiting in line.
+- **Every queued run of several tickets**: on the **Tickets** list, select them and click the cancel icon next to the delete icon.
+
+Calls waiting in line are removed right away. Runs waiting for a later time are skipped when that time comes. Runs that already started finish normally, and so does anything they queue after you cancel. Each cancelled run is logged as a row with the result `cancelled` (`skipped: cancelled`). The ticket, its remaining count and its log are kept, and cancelled runs still count toward the month's [queued ticket runs](/introduction/plans.md#queued-ticket-runs). An AI agent uses the `cancel_run` and `cancel_queued` actions of the MCP server's ticket tool.
+
 ### One at a time: concurrency
 
 Two settings on the ticket decide how many calls may run at once, and what the rest get.

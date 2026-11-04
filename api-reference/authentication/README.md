@@ -208,7 +208,7 @@ See [Anonymous Login](/authentication/anonymous-login.md).
 ```ts
 {
     code: "INVALID_REQUEST";
-    message: "Anonymous login is not enabled for this service."; // The project owner has not turned on Anonymous Login in the project settings.
+    message: "Anonymous login is not enabled for this project."; // The project owner has not turned on Anonymous Login in the project settings.
 }
 |
 {

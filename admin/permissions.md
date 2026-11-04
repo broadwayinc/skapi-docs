@@ -180,7 +180,7 @@ This is what an admin needs to know about it:
 - An account you invite gets its e-mail login when it accepts the invitation.
 - An e-mail you change with [`updateUserAttributes()`](#editing-a-user-s-profile) removes the account's e-mail login until the user verifies the new address.
 
-When a login ID is already taken, [`createAccount()`](/api-reference/admin/README.md#createaccount) and [`inviteUser()`](/api-reference/admin/README.md#inviteuser) are refused with `EXISTS` and `E-mail "user@email.com" is already a login ID in this service.`, or `Username "jane@email.com" is already a login ID in this service.` for a `username` that is an e-mail address logging another account in.
+When a login ID is already taken, [`createAccount()`](/api-reference/admin/README.md#createaccount) and [`inviteUser()`](/api-reference/admin/README.md#inviteuser) are refused with `EXISTS` and `E-mail "user@email.com" is already a login ID in this project.`, or `Username "jane@email.com" is already a login ID in this project.` for a `username` that is an e-mail address logging another account in.
 A refusal means one thing: the address is already a login ID the other account was **granted**, its own login ID or its own verified e-mail.
 
 :::warning An account can lose its e-mail login without anyone touching it
@@ -450,8 +450,8 @@ Every message below is the exact text the server returns, and every code is the 
 | `INVALID_PARAMETER` | `No attributes provided.` | `updateUserAttributes()`, `updateProfile()` with another `user_id`, when the request carries no attributes at all |
 | `INVALID_PARAMETER` | `"<attribute>" cannot be changed.` | `updateUserAttributes()`, for an attribute outside the editable list |
 | `INVALID_REQUEST` | `The login username is permanent and cannot be changed.` | `updateUserAttributes()` sending a login handle without an `email` |
-| `EXISTS` | `E-mail "user@email.com" is already a login ID in this service.` | `createAccount()`, `inviteUser()`, `updateUserAttributes()` |
-| `EXISTS` | `Username "jane@email.com" is already a login ID in this service.` | `createAccount()`, `inviteUser()` |
+| `EXISTS` | `E-mail "user@email.com" is already a login ID in this project.` | `createAccount()`, `inviteUser()`, `updateUserAttributes()` |
+| `EXISTS` | `Username "jane@email.com" is already a login ID in this project.` | `createAccount()`, `inviteUser()` |
 | `EXISTS` | `User already exists.` | `createAccount()`, `inviteUser()`, `resendInvitation()`, `cancelInvitation()` on an account that already exists |
 | `EXISTS` | `User is already invited.` | `inviteUser()` while an invitation to that address is pending |
 | `NOT_EXISTS` | `No invitation found for: user@email.com.` | `resendInvitation()`, `cancelInvitation()` |

@@ -302,7 +302,7 @@ The subscription is made when the user opens the signup confirmation link, which
 
 :::warning
 - `signup_confirmation` is required. A user whose e-mail is never confirmed is never subscribed.
-- A named group has to exist when `signup()` is called, otherwise the call fails with `Newsletter group "promo" does not exist for this service.` If the group is deleted before the user confirms, or its restriction asks for an access group the new account does not have, the user is created without the subscription.
+- A named group has to exist when `signup()` is called, otherwise the call fails with `Newsletter group "promo" does not exist for this project.` If the group is deleted before the user confirms, or its restriction asks for an access group the new account does not have, the user is created without the subscription.
 - Only `0` and `1` are accepted as numbers. The access groups `2` ~ `99` are not newsletters a signup can choose; create a named group with that restriction instead.
 :::
 
