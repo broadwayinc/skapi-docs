@@ -58,7 +58,9 @@ Writing the table as an **object** sends only the keys you actually wrote. Leavi
 sends no access group at all, and the backend decides the scope of the call:
 
 - For a signed in user who is not the project owner, no access group resolves to group `0`, so it reads and deletes the
-  same public records the shorthand would have.
+  same public records the shorthand would have. The one exception is a **read by `reference`** (SDK 2.2.29): it returns
+  the referencing records in every group that user can read, see
+  [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 - For the **master** (project owner) account, it is not restricted to one group: the call spans every access group in
   the table. That is the reason the two forms are kept apart. A dashboard or an admin tool that wants to see a whole
   table wants the object form, and a call that must stay inside the public records wants the shorthand.

@@ -65,6 +65,28 @@ In this example, the `query` object includes the `record_id` property set to the
 
 The `response.list` will contain the record data if the record exists.
 
+### Fetching Records That Reference a Record
+
+A signed in user can fetch every record that references a record, across all tables, in one request:
+
+```js
+skapi.getRecords({ reference: 'record id or unique id' }).then(response => {
+    console.log(response.list); // referencing records in every table and access group this user can read
+});
+```
+
+See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record) for what the list includes.
+
+### Request rate
+
+For a signed-in user, `getRecords()` requests from skapi-js **older than 2.2.30** are limited to **3,000 a minute per signed-in session**. Past that, the server answers `429 TOO_MANY_REQUESTS` with `Retry-After: 60`; the SDK waits and retries on its own. Requests from skapi-js 2.2.30 or later are not limited this way, so keep the SDK up to date:
+
+```
+$ npm i skapi-js@latest
+```
+
+A normal app never comes close to this. It is reached by code that loops one request per table, for example to collect the records that reference a record. Use one [`getRecords({ reference })`](/database/referencing.md#fetching-every-record-that-references-a-record) call instead.
+
 
 ## Database Fetch Options
 

@@ -197,8 +197,8 @@ getRecords(
         record_id?: string; // When record ID is given, it will fetch the record with the given record ID. all other parameters are bypassed and will override unique ID.
         unique_id?: string; // Unique ID of the record. When unique ID is given, it will fetch the record with the given unique ID. All other parameters are bypassed.
         /** When the table is given as a string value, the given value will be set as table.name and table.access_group will be pinned to 0 ('public'). */
-        /** A table object sends only the keys that were written: with 'access_group' left out, no access group is sent and the backend decides the scope. A signed in non-master reads group 0, the master reads every group in the table. See [Access Restrictions](/database/access-restrictions.md#the-table-shorthand-and-access-group) */
-        /** 'table' is optional when 'record_id' or 'unique_id' is used. */
+        /** A table object sends only the keys that were written: with 'access_group' left out, no access group is sent and the backend decides the scope. A signed in non-master reads group 0, the master reads every group in the table. With 'reference', a signed in user reads every group they can read in that table. See [Access Restrictions](/database/access-restrictions.md#the-table-shorthand-and-access-group) */
+        /** 'table' is optional when 'record_id' or 'unique_id' is used, and for a signed in user reading by 'reference' (every table and access group the user can read, in one request). */
         table?: string | {
             name: string, // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
             access_group?: number | 'private' | '*' | 'public' | 'authorized' | 'admin'; // 0 to 99 if using number. 'public' = 0, 'authorized' = 1, 'admin' = 99, '*' = 'private'. Default: 'public'
@@ -209,6 +209,8 @@ getRecords(
          * When unique ID is given, it will fetch the records referencing the given unique ID.
          * When record ID is given, it will fetch the records referencing the given record ID.
          * When user ID is given, it will fetch the records uploaded by the given user ID.
+         * Without 'table' (signed in users), the referencing records come from every table and access group the user can read:
+         * public, groups up to their own, their own private records, and subscription records they uploaded.
          */
         reference?: string | { record_id?: string; unique_id?: string; user_id?: string };
 

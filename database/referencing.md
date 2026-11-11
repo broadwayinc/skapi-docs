@@ -100,6 +100,22 @@ skapi.getRecords({
 
 More on unique ID can be found in [Unique ID](/database/unique-id.md).
 
+## Fetching every record that references a record
+
+A signed-in user can leave out `table` and fetch the records referencing a record in **every** table and access group they can read, in one request.
+
+```js
+skapi.getRecords({
+    reference: 'record id or unique id of the post'
+}).then(response => {
+    console.log(response.list); // Records in any table that reference the post, that this user can read
+});
+```
+
+The list holds what the same user could fetch table by table: public records, records in access groups up to their own, their own private records, and subscription records they uploaded. Add `table: { name: 'Comments' }` (without `access_group`) to narrow it to one table across the same groups. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
+
+Signed-out users still need `table`. [`deleteRecords()`](/api-reference/database/README.md#deleterecords) is unchanged.
+
 
 ## Using reference to fetch certain user's post
 

@@ -1,6 +1,15 @@
 # Version History
 
-### Current version: 2.2.28
+### Current version: 2.2.30
+
+**2.2.30**
+
+- **The SDK tells the server its version.** Every request now carries the library version (in the `Content-Meta` header the SDK already sends), so the backend can tell current clients from older builds. Nothing changes in how you call any method.
+- **`getRecords()` from older versions is rate limited.** For a signed-in user, `getRecords()` requests from skapi-js older than 2.2.30 (or from clients that do not send a version) are limited to **3,000 a minute per signed-in session**. Past that, the server answers `429` with `Retry-After: 60`, and the SDK waits and retries on its own. Requests from 2.2.30 or later are not limited this way. If an app calls `getRecords()` once per table to collect related records, switch to one [`getRecords({ reference })`](/database/referencing.md#fetching-every-record-that-references-a-record) call; see [Request rate](/database/fetch.md#request-rate).
+
+**2.2.29**
+
+- **Every record that references a record, in one request.** A signed-in user can call `getRecords({ reference })` without `table` and get the referencing records in every table and access group they can read (public, groups up to their own, their own private records, and subscription records they uploaded). `table: { name }` without `access_group` narrows it to one table across the same groups, where it used to return public records only. Apps that called `getRecords()` once per table to find a record's children can make one call instead. Needs the backend update that ships with it; signed-out users still need `table`, and `deleteRecords()` is unchanged. See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 
 **2.2.28**
 
