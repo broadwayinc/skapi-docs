@@ -40,7 +40,7 @@ Before implementing features, confirm these values are available:
 2. Any required Secret Key names
 3. Any required OpenID logger IDs
 
-If any of these are missing, ask for them first. If the user has no Skapi project yet, they create one at https://www.skapi.com/new-project (the project form on its own page; see [Creating a Project](/introduction/getting-started.md#creating-a-project)) and read the Project ID off the project's Settings page; neither an AI agent nor the Skapi MCP server can create one. A pasted `<Project ID>` is this documentation's placeholder, not an id: ask for the real one.
+If any of these are missing, ask for them first. If the user has no Skapi project yet: when the Skapi MCP server is connected, create a Free plan project with its `createProject` tool, after asking the user for the project name, an optional description and the region; otherwise the user creates one at https://www.skapi.com/new-project (the project form on its own page; see [Creating a Project](/introduction/getting-started.md#creating-a-project)) and reads the Project ID off the project's Settings page. A pasted `<Project ID>` is this documentation's placeholder, not an id: ask for the real one.
 
 ## Skapi Initialization
 

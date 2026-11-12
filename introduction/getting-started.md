@@ -257,21 +257,23 @@ Any platform that speaks MCP works. The endpoint is the same everywhere; only th
 
 ### Coding agents
 
-Each of these opens your browser to sign you in with your Skapi account the first time the agent uses the server. Leave any client ID or client secret field empty.
+Each of these opens your browser to sign you in with your Skapi account. Leave any client ID or client secret field empty.
+
+The steps below were checked against each tool's own documentation in November 2026. Every tool does this a little differently and changes as it updates: if a step does not match what you see, follow the tool's own MCP guide. The endpoint and the Skapi sign-in stay the same.
 
 ::: code-group
 
 ```sh [Claude Code]
 claude mcp add --transport http skapi https://mcp.broadwayinc.computer
+claude mcp login skapi
 ```
 
 ```sh [Codex CLI]
 codex mcp add skapi --url https://mcp.broadwayinc.computer
-codex mcp login skapi
 ```
 
 ```sh [Gemini CLI]
-gemini mcp add --transport http skapi https://mcp.broadwayinc.computer
+gemini mcp add --transport http -s user skapi https://mcp.broadwayinc.computer
 ```
 
 ```json [Cursor]
@@ -286,20 +288,21 @@ gemini mcp add --transport http skapi https://mcp.broadwayinc.computer
 
 ```json [VS Code / Copilot]
 {
-  "servers": {
+  "mcpServers": {
     "skapi": {
       "type": "http",
-      "url": "https://mcp.broadwayinc.computer"
+      "url": "https://mcp.broadwayinc.computer",
+      "tools": ["*"]
     }
   }
 }
 ```
 
-```json [Windsurf]
+```json [Devin Desktop]
 {
   "mcpServers": {
     "skapi": {
-      "serverUrl": "https://mcp.broadwayinc.computer"
+      "url": "https://mcp.broadwayinc.computer"
     }
   }
 }
@@ -307,23 +310,30 @@ gemini mcp add --transport http skapi https://mcp.broadwayinc.computer
 
 :::
 
-| Platform | Where it goes | Signing in |
+| Tool | Where it goes | Signing in |
 | --- | --- | --- |
 | Claude Code | The command above. Add `--scope user` to have the server in every project. | `claude mcp list` shows the server as **Needs authentication** until you sign in. Run `claude mcp login skapi`, or `/mcp` in a session, pick **skapi** and choose **Authenticate**. |
-| Codex CLI | The command above writes `[mcp_servers.skapi]` with `url` into `~/.codex/config.toml`. | `codex mcp login skapi` |
-| Gemini CLI | The command above writes `httpUrl` into `.gemini/settings.json`. Add `-s user` to have the server in every project. | Automatic. `/mcp auth skapi` in a session starts it again. |
-| Cursor | `.cursor/mcp.json` in the project, or `~/.cursor/mcp.json` for every project. The Customize page manages the same list. | Prompted in the browser |
-| VS Code with GitHub Copilot | `.vscode/mcp.json`, or Command Palette, **MCP: Add Server**. | Prompted in the browser on first connection |
-| Windsurf, now Devin Desktop | `~/.config/devin/mcp_config.json`, opened from the MCPs entry of the Cascade panel's menu. The Devin CLI also takes `devin mcp add skapi https://mcp.broadwayinc.computer`. | Prompted in the browser, or `devin mcp login skapi` |
+| Codex CLI | The command above writes `[mcp_servers.skapi]` with `url` into `~/.codex/config.toml`, for every project. | Starts as soon as the command runs. Sign in again later with `codex mcp login skapi`. |
+| Gemini CLI | The command above. `-s user` puts it in every project; without it, only this one. | Run `/mcp auth skapi` in a session. Since June 2026, free, Google One and AI Pro/Ultra accounts use **Antigravity CLI** instead: add the server in `/mcp`, or in `~/.gemini/config/mcp_config.json` with `"serverUrl": "https://mcp.broadwayinc.computer"`. Sign-in starts by itself there. |
+| Cursor | `~/.cursor/mcp.json` for every project, or `.cursor/mcp.json` in one. Turn it on or off from **Customize** in the sidebar. | Cursor opens the sign-in page in your browser. |
+| VS Code with GitHub Copilot | Command Palette, **MCP: Add Server** (or **Chat: Open Customizations > MCP Servers > +**): choose **HTTP**, paste the endpoint, name it `skapi` and choose **Global > Copilot Global**. That writes `~/.copilot/mcp-config.json`, shown above, which Copilot CLI reads too. The older `.vscode/mcp.json` format (`"servers"`) works until February 2027. | Sign in when asked, or use **Authenticate** in the server's actions. On Copilot Business and Enterprise, an admin must turn on the **MCP servers in Copilot** policy. |
+| Devin Desktop (formerly Windsurf) | **Customize** in the agent sidebar, **MCPs** tab, or `~/.config/devin/mcp_config.json`, shown above. The Devin CLI takes `devin mcp add -s user skapi https://mcp.broadwayinc.computer`. | Click **Authenticate** when it shows **Needs authentication**, or run `devin mcp login skapi`. |
+| Zed | **Settings > AI > MCP Servers > Add Server > Add Remote Server**, or `"context_servers": { "skapi": { "url": "https://mcp.broadwayinc.computer" } }` in `settings.json`. | Zed asks you to sign in. |
+| JetBrains Junie | **Settings \| Tools \| Junie \| MCP Settings**, or `~/.junie/mcp/mcp.json` with `mcpServers` and `url`, as for Cursor. | Choose **Authorize** when it says **Authorization required**. |
+| JetBrains AI Assistant | **Settings \| Tools \| AI Assistant \| Model Context Protocol (MCP)**, then **Add**. | Cannot sign in with OAuth yet: use an [access token](#signing-in-without-a-browser). |
+| Cline | In the Cline panel, the **MCP Servers** icon, **Remote Servers** tab: name, endpoint, and **Transport Type** set to **Streamable HTTP**. In its JSON file, set `"type": "streamableHttp"`; without it Cline uses the older SSE transport. | Sign in when asked. |
+| Kiro | `~/.kiro/settings/mcp.json` with `mcpServers` and `url`, as for Cursor. | Kiro opens the sign-in page itself. |
+| Amp | `amp mcp add skapi https://mcp.broadwayinc.computer` | The sign-in page opens when Amp starts. |
+| opencode | `opencode mcp add skapi --url https://mcp.broadwayinc.computer` | `opencode mcp auth skapi` |
 
 ### Chat platforms on the web
 
-A web platform has no command line, so the server is added in its settings instead, usually on a page called Connectors, Integrations, Apps or MCP servers. Look for an option to add a custom or remote server, paste the endpoint, leave the client ID and secret empty, and sign in when it asks.
+A web platform has no command line, so the server is added in its settings instead.
 
-- **Claude** (claude.ai, the desktop app and Cowork): **Customize > Connectors**, then **Add custom connector**. Paste the endpoint and click **Add**. On Team and Enterprise plans an organization owner adds it under **Organization settings > Connectors**, and every member clicks **Connect**.
-- **ChatGPT**: turn on **Developer mode** under **Settings > Security and login**, open **chatgpt.com/plugins**, click **+**, give it a name and paste the endpoint as the connection. In a chat, choose **Developer mode** from the **+** menu and pick it. Available on the paid plans.
+- **Claude** (claude.ai, the desktop app and Cowork): open **Customize > Connectors**, click **+ Add**, then **Add custom connector**. Enter a name and the endpoint, click **Continue** twice, keep sign-in on with **Register automatically** as the OAuth client, click **Add**, then **Connect** and sign in. In a chat, turn it on under **+ > Connectors**. Every plan can add custom connectors; Free allows one. On Team and Enterprise an Owner adds it under **Organization settings > Connectors** (**Add > Custom > Web**), and every member clicks **Connect** under **Customize > Connectors**. Once added on the web or desktop, the mobile apps have it too.
+- **ChatGPT**: open **chatgpt.com/plugins**, click **+**, then **Add custom MCP server**. Enter a name, paste the endpoint as the **Server URL** and choose **OAuth**, accept the warning, click **Create as a plugin**, then install it from your plugins. In a chat, type **@** and pick it, and sign in when asked. Developer mode is no longer needed. It is set up on the web only; Business and Enterprise/Edu get full use (on Business, admins and owners add it), and Pro connects with read and fetch only.
 
-Other platforms follow the same pattern. Zed, JetBrains AI Assistant, Cline, Kiro and Amp all take a remote MCP server by URL from their settings page or their config file. Wherever a platform asks for a transport, choose **Streamable HTTP**; wherever it asks how to authenticate, choose **OAuth**.
+Other platforms follow the same pattern: add a remote MCP server by its URL in the settings page or the config file. Wherever a platform asks for a transport, choose **Streamable HTTP**; wherever it asks how to authenticate, choose **OAuth**.
 
 Then tell the agent which project to work on:
 
@@ -341,38 +351,94 @@ The server signs you in with OAuth, using your Skapi account. Your platform regi
 - **The sign-in renews itself.** The platform refreshes it in the background while you use it. If the agent has not used the server for about 30 days, the platform asks you to sign in again.
 - **The agent acts as you.** It reaches only the projects and data your account can reach; see [What the MCP server can do for you](#what-the-mcp-server-can-do-for-you).
 
-If a tool answers **Unauthorized**, or the platform reports an incompatible authorization server, it is holding a connection made before the current sign-in. Sign in again: in Claude Code run `claude mcp login skapi`, elsewhere use the platform's reconnect or authenticate option, or remove the server and add it again.
+If a tool answers **Unauthorized**, the platform shows the server as **Needs authentication**, or it reports an incompatible authorization server, it is not signed in or holds a connection made before the current sign-in. Sign in again the way your tool does it (checked against each tool's documentation in November 2026):
+
+| Tool | Sign in again |
+| --- | --- |
+| Claude (web, desktop) | **Customize > Connectors**, open skapi and click **Connect**. |
+| ChatGPT | Open the plugin at **chatgpt.com/plugins** and sign in again. |
+| Claude Code | `claude mcp login skapi`, or `/mcp` in a session, pick **skapi** and choose **Authenticate**. |
+| Codex CLI | `codex mcp login skapi` |
+| Gemini CLI | `/mcp auth skapi` in a session |
+| GitHub Copilot CLI | `/mcp auth` in a session, then pick skapi |
+| Cursor | **Customize** in the sidebar, then the sign-in button on skapi |
+| VS Code | **Authenticate** in the skapi server's actions |
+| Devin Desktop, Devin CLI | **Authenticate** on the server, or `devin mcp login skapi` |
+| Zed | The sign-in prompt on the server in **Settings > AI > MCP Servers** |
+| JetBrains Junie | **Authorize** on the server |
+| Cline | Sign in when asked; in Cline CLI, `cline mcp` and **Authorize OAuth** |
+| Kiro | **Re-authenticate** in the MCP panel, or `/mcp auth` in Kiro CLI |
+| opencode | `opencode mcp auth skapi` |
+| Amp | `amp mcp oauth logout skapi`, then start Amp again |
+
+With an access token, the token was revoked or has expired: create a new one on the [token page](#signing-in-without-a-browser) and replace it. If nothing helps, remove the server and add it again.
 
 ### Signing in without a browser
 
-The sign-in above opens a browser. On a machine that has none, over SSH, in a container or in continuous integration, or on a platform that only takes a fixed header, there are two ways in.
+The sign-in above opens a browser. On a machine that has none, over SSH, in a container, in continuous integration or in a script, there are two ways in.
 
-**A command-line sign-in that prints a link.** Claude Code and Codex CLI can sign in without opening a browser themselves:
+**An access token you set as a header.** This works in every tool that can send a header. You create the token by hand, once, on any device with a browser, at the MCP server's token page:
 
-```sh
-claude mcp login skapi --no-browser
-codex mcp login skapi
-```
-
-Each prints a URL. Open it on any device where you can sign in to Skapi, finish, and paste the address it returns back into the terminal. Claude Code needs a real terminal for this, so over SSH connect with `ssh -t`.
-
-**An access token you set as a header.** For anything else, including a script, a scheduled job, or a platform that offers only a header field, use an access token. The MCP server has a page that issues them:
-
-**https://mcp.broadwayinc.computer/connect**
+**[https://mcp.broadwayinc.computer/connect](https://mcp.broadwayinc.computer/connect)**
 
 Open it in any browser (`https://www.skapi.com/mcp` is a shortcut to the same page). It runs the same Skapi sign-in a platform would open, then lets you create tokens. The steps:
 
 1. Open the page and sign in with your Skapi account.
 2. Click **Create token**, and optionally label it so you can tell your machines apart.
 3. Copy the token. It starts with `skmcp_` and is shown once, right then, never again.
-4. Give it to your platform as the `Authorization: Bearer` header. For Claude Code:
+4. Give it to your tool as the `Authorization: Bearer` header. The `/connect` page prints the whole entry for each tool; the commands are:
 
-   ```sh
-   claude mcp add --transport http skapi https://mcp.broadwayinc.computer \
-     --header "Authorization: Bearer skmcp_YOUR_TOKEN"
-   ```
+::: code-group
 
-   In a config file the token goes in a `headers` entry (`"Authorization": "Bearer skmcp_YOUR_TOKEN"`) on the server, or, for Codex CLI, in `bearer_token_env_var`. The `/connect` page prints the whole entry for Claude Code, Codex CLI, Gemini CLI, Cursor, VS Code and Windsurf.
+```sh [Claude Code]
+claude mcp add --transport http skapi https://mcp.broadwayinc.computer \
+  --header "Authorization: Bearer skmcp_YOUR_TOKEN"
+```
+
+```sh [Codex CLI]
+export SKAPI_MCP_TOKEN=skmcp_YOUR_TOKEN
+codex mcp add skapi --url https://mcp.broadwayinc.computer --bearer-token-env-var SKAPI_MCP_TOKEN
+```
+
+```sh [Gemini CLI]
+gemini mcp add --transport http -s user \
+  -H "Authorization: Bearer skmcp_YOUR_TOKEN" skapi https://mcp.broadwayinc.computer
+```
+
+```sh [Copilot CLI]
+copilot mcp add --transport http skapi https://mcp.broadwayinc.computer \
+  --header "Authorization: Bearer skmcp_YOUR_TOKEN"
+```
+
+```sh [Devin CLI]
+devin mcp add -s user skapi https://mcp.broadwayinc.computer \
+  -H "Authorization: Bearer skmcp_YOUR_TOKEN"
+```
+
+```sh [Cline CLI]
+cline mcp add skapi https://mcp.broadwayinc.computer --transport http \
+  --header "Authorization: Bearer skmcp_YOUR_TOKEN" --yes
+```
+
+```json [Config file]
+"skapi": {
+  "url": "https://mcp.broadwayinc.computer",
+  "headers": { "Authorization": "Bearer skmcp_YOUR_TOKEN" }
+}
+```
+
+:::
+
+The config file form fits Cursor, VS Code, Devin Desktop, Zed, JetBrains, Cline, Kiro and Amp: add `headers` next to the server's address. On claude.ai, a token goes under **Request headers** when adding the connector, with sign-in set to **No sign in**; only some organizations have that option yet. ChatGPT does not take tokens.
+
+**A command-line sign-in that prints a link.** A few tools print a sign-in link you open on another device:
+
+- **Claude Code:** `claude mcp login skapi --no-browser`. Open the link on any device, sign in, and paste the full address from that browser's address bar back into the terminal. It needs a real terminal, so over SSH connect with `ssh -t`.
+- **Codex CLI:** `codex mcp login skapi --no-browser`, then the same: open the link, sign in, and paste the address back.
+- **opencode:** `opencode mcp auth skapi`. After you sign in, the browser lands on a page that fails to load: copy its address and paste it into the prompt.
+- **Amp:** start `amp`, open the sign-in page on another device, then copy the address of the page that fails to load and paste it into Amp's dialog.
+
+Gemini CLI, Antigravity CLI, Devin, Kiro, Cline and Copilot CLI have no such option today; use an access token with them.
 
 The token acts as you, with everything your account can reach, for as long as that sign-in lasts or until you revoke it. Return to the same page any time to see your tokens and revoke one. A platform set up with a token never opens the sign-in page; when you revoke the token it reports the server as unauthorized until you give it a new one. Keep the token as secret as a password.
 

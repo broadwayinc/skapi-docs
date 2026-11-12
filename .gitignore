@@ -9,3 +9,5 @@ SKAPI.md
 public/llms.txt
 SKAPI-full.md
 public/md/
+*.pid
+nohup.out
