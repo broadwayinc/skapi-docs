@@ -346,8 +346,8 @@ See [DatabaseResponse](/api-reference/data-types/README.md#databaseresponse)
 
 ```ts
 deleteRecords({
-    record_id?: string; // Record ID to delete. When record ID is given, it will delete the record with the given record ID. It will bypass all other parameters and will override unique ID.
-    unique_id?: string; // Unique ID to delete. When unique ID is given, it will delete the record with the given unique ID. It will bypass all other parameters except record_id.
+    record_id?: string | string[]; // Record ID to delete, or a list of up to 1000 (2.2.31). When given, it deletes those records, bypasses all other parameters and overrides unique ID. Never empty: '' or [] is refused.
+    unique_id?: string | string[]; // Unique ID to delete, or a list of up to 1000 (2.2.31). When given, it deletes those records and bypasses all other parameters except record_id. Never empty: '' or [] is refused.
 
     /** Delete bulk records by query. Query will be bypassed when "record_id" is given. */
     /** When deleteing records by query, It will only delete the record that user owns. */

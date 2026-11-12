@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.32
+### Current version: 2.2.33
+
+**2.2.33**
+
+- Documentation only: the `reference` option of `getRecords()` now explains, in your editor, who reads the records that reference a record. The user who uploaded the referenced record, and the users it was shared with, read every record that references it (every access group, private and subscription records); anyone else reads access groups `0` up to their own, no private records, and only the subscription records they uploaded. No behaviour change. See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 
 **2.2.32**
 
