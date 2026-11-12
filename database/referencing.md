@@ -114,12 +114,12 @@ skapi.getRecords({
 
 Which records it returns depends on whether the user has **private access** to the record they name, the record being referenced:
 
+**The rule:** the user who uploaded a record, and the users it was shared with, have every right to read the records that reference it.
+
 | The user ... | The list holds |
 |---|---|
-| has **no** private access to it | the referencing records in access groups `0` up to the user's own access group. **No** private records, not even the user's own. |
-| **has** private access to it: they uploaded it, or it was shared with them with [`grantPrivateRecordAccess()`](/api-reference/database/README.md#grantprivateaccess) | **every** referencing record: access groups `0` to `99` and every private record, whatever the user's own access group. |
-
-Either way, subscription records come back only when the user uploaded them.
+| **uploaded** the referenced record, or it was **shared** with them with [`grantPrivateRecordAccess()`](/api-reference/database/README.md#grantprivateaccess) | **every** record that references it: access groups `0` to `99`, every private record and every subscription record, whatever the user's own access group. |
+| anyone else | the referencing records in access groups `0` up to the user's own access group. **No** private records, not even the user's own, and subscription records only when the user uploaded them. |
 
 This is the same rule as for any private record that references another record (see [Private Records](/database/access-restrictions.md#private-records)): private access to the referenced record opens the records attached to it, and being able to read it is not enough, so a public record opens none of them. To read your own private records that reference a record you have no private access to, name the table with `access_group: 'private'`.
 

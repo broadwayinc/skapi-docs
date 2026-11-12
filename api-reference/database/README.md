@@ -209,9 +209,10 @@ getRecords(
          * When unique ID is given, it will fetch the records referencing the given unique ID.
          * When record ID is given, it will fetch the records referencing the given record ID.
          * When user ID is given, it will fetch the records uploaded by the given user ID.
-         * Without 'table' (signed in users), the referencing records come from every table. Without private access to the referenced
-         * record: access groups 0 up to the user's own, and no private records. With private access to it (the user uploaded it, or it
-         * was shared with them): every access group, 0 to 99, and every private record. Subscription records only when the user uploaded them.
+         * Without 'table' (signed in users), the referencing records come from every table. The user who uploaded the referenced record,
+         * and the users it was shared with, read EVERY record that references it: every access group 0 to 99, every private record and
+         * every subscription record. Anyone else: access groups 0 up to their own, no private records, and subscription records only
+         * when they uploaded them.
          */
         reference?: string | { record_id?: string; unique_id?: string; user_id?: string };
 

@@ -142,7 +142,7 @@ skapi.getRecords(config)
 Private records are only accessible to the uploader of the record.
 
 A private record that references another record is also readable by the users with private access to that record: its uploader, and the users it is shared with. This does not depend on the referenced record's access group, so a public record opens none of the private records attached to it.
-A [`getRecords({ reference })` without `table`](/database/referencing.md#fetching-every-record-that-references-a-record) follows the same rule: with private access to the referenced record it returns every referencing record in every access group, private included; without it, only access groups `0` up to the user's own, and no private records.
+A [`getRecords({ reference })` without `table`](/database/referencing.md#fetching-every-record-that-references-a-record) follows the same rule: the user who uploaded the referenced record, and the users it was shared with, get every record that references it (every access group, private and subscription records included); anyone else gets access groups `0` up to their own, no private records, and only the subscription records they uploaded.
 
 The project owner and admins read a private record's data only on the same terms as any other user. See [Private records](/admin/permissions.md#private-records).
 
