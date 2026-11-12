@@ -54,21 +54,23 @@ without a `record_id`). It is worth being deliberate about on a delete: `deleteR
 empty the table, it deletes your public records in it, and the records the same table holds at any other access group
 are left exactly where they are.
 
-Writing the table as an **object** sends only the keys you actually wrote. Leaving `access_group` out of the object
-sends no access group at all, and the backend decides the scope of the call:
+Written as an **object**, the table must name its group: `{ name, access_group }`. A table always means one table
+in one access group. From skapi-js 2.2.32, `getRecords()` and `deleteRecords()` refuse a table object without
+`access_group` before sending (`INVALID_PARAMETER`). To read what references a record across every table and group,
+send `reference` without `table`, see
+[Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 
-- For a signed in user who is not the project owner, no access group resolves to group `0`, so it reads and deletes the
-  same public records the shorthand would have. The one exception is a **read by `reference`** (SDK 2.2.29): it returns
-  the referencing records in every group that user can read, see
-  [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
-- For the **master** (project owner) account, it is not restricted to one group: the call spans every access group in
-  the table. That is the reason the two forms are kept apart. A dashboard or an admin tool that wants to see a whole
-  table wants the object form, and a call that must stay inside the public records wants the shorthand.
+The **project owner's** account is the one exception: it may leave `access_group` out, and the call then spans every
+access group in the table. That is what a dashboard or an admin tool that wants a whole table uses.
 
 ```js
-await skapi.getRecords({ table: 'notes' });            // public records only, for everyone
-await skapi.getRecords({ table: { name: 'notes' } });  // no group sent: every group, when the caller is the master
+await skapi.getRecords({ table: 'notes' });                             // public records only
+await skapi.getRecords({ table: { name: 'notes', access_group: 1 } });  // one group, named
+await skapi.getRecords({ table: { name: 'notes' } });                   // project owner only: every group
 ```
+
+An older SDK still sends a table object without a group; for anyone but the project owner the backend reads it as
+group `0`, with or without `reference`.
 
 A listing that spans every group includes the `private` records of your users, and those come back with their
 `data` withheld. That is true of every way of listing them, so an admin tool reads the whole table without

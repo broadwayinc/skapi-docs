@@ -112,7 +112,7 @@ skapi.getRecords({
 });
 ```
 
-The list holds what the same user could fetch table by table: public records, records in access groups up to their own, their own private records, and subscription records they uploaded. Add `table: { name: 'Comments' }` (without `access_group`) to narrow it to one table across the same groups. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
+The list holds what the same user could fetch table by table: public records, records in access groups up to their own, their own private records, and subscription records they uploaded. To narrow it to one table, name the table with its access group, `table: { name: 'Comments', access_group: 1 }`, one call per group. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
 
 Signed-out users still need `table`. [`deleteRecords()`](/api-reference/database/README.md#deleterecords) is unchanged.
 
