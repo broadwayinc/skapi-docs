@@ -398,12 +398,12 @@ You can watch this on the `Newsletters` page of the dashboard: every sent newsle
 
 Sent newsletters are stored, and they count against the plan's email storage limit: 50 MB on Trial, 1 GB on Standard and 5 GB on Premium.
 
-On the Trial and Standard plans, exceeding email storage deletes the oldest newsletters to reclaim space, and the project is never suspended for it.
+On the Trial and Standard plans, exceeding email storage deletes the oldest newsletters to reclaim space.
 On the Premium plan nothing is deleted and the excess is billed as overage.
 
-A project that moves to the Trial plan with more than 50 MB of sent newsletters stored is therefore not suspended for them: its oldest newsletters are deleted until the rest fits.
+A project that moves to the Trial plan with more than 50 MB of sent newsletters stored has its oldest newsletters deleted until the rest fits.
 The Premium plan never deletes a newsletter to make room.
-See [Plans and Limits](/introduction/plans.md) for what a suspended project can and cannot do.
+The project owner gets an e-mail when email storage reaches 80% of the plan and again at 100%; see [Reaching a plan limit](/introduction/plans.md#reaching-a-plan-limit).
 
 ## Managing subscribers
 

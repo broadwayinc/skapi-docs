@@ -40,40 +40,41 @@ The **Plan & Usage** card on your project's `Settings` page at [skapi.com](https
 ## Trial and Standard: hard stop
 
 The Trial and Standard plans stop at their limits instead of billing you for the excess.
+A request that needs more than the plan allows is refused, and everything else keeps working.
 
-- New signups past the user limit are refused.
-- Record writes past the database storage limit are refused.
-- File uploads past the file storage limit are refused.
+- New signups past the user limit are refused with `INVALID_REQUEST: User limit exceeded.`
+- Record writes past the database storage limit are refused with `EXCEED_LIMIT: Project has exceeded database storage limit. Consider upgrading your plan.`
+- File uploads past the file storage limit are refused with `EXCEED_LIMIT: Project has exceeded file storage limit (hosting, files and BunnyQuery index share it). Consider upgrading your plan.` This covers record files, web hosting files and the BunnyQuery index, which share one pool.
 - Newsletter sends past the monthly limit are refused, and so are subscriptions past the subscriber limit. One newsletter costs one send per subscriber it goes to, so one send to a full Trial list of 50 subscribers uses all 50 monthly sends. A Trial project is also refused once its owner has used the 200 newsletter mails a month their Trial projects share. Invitation e-mails count as sends too, resends included, and are refused past the project's monthly limit; see [Inviting Users](/admin/invite.md).
-- When database storage or file storage goes over the plan limit, the project is suspended. Email storage never suspends a project: the oldest newsletters are deleted to make room instead.
+- Downloads and hosted pages past the monthly bandwidth allowance are refused until the next month; see [Bandwidth](#bandwidth).
+- A Respond that would queue a ticket run past the month's figure fails with `QUOTA_EXCEEDED`; see [Queued ticket runs](#queued-ticket-runs).
+- Email storage is not refused: when it is full, the oldest newsletters are deleted to make room; see [Email storage](#email-storage).
 
-Writes stop at the limit, so a project normally never gets far past one.
-A project that is over a storage limit anyway, for example because it moved to a smaller plan, is suspended.
+## Reaching a plan limit
 
-## Suspended projects
+A project that reaches or goes past a plan limit is never suspended and never deleted for it.
+Its existing data keeps working: users can sign in, records and files can be read, and hosted pages are served (within the bandwidth allowance).
+Only the requests that need more than the plan allows are refused, with the errors above.
+A project can end up past a storage limit, for example after it moves to a smaller plan; it keeps running the same way, and writes that need more room are refused until it is back under the limit.
 
-While a project is suspended, its end users cannot use it.
-API requests, sign in, signups, file links and hosted pages are refused, and the API answers `SERVICE_DISABLED: The service is suspended.`
+The project owner gets an e-mail when a limit reaches 80% of the plan (a usage warning) and again when it reaches 100% (limit reached).
+Each e-mail links to the project's dashboard and to the upgrade page.
+This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth and monthly queued ticket runs, on Trial and Standard.
+A monthly limit starts over with the month.
 
-You keep access in the Skapi dashboard.
-You can open the project, list its records, its files, its hosting files and its newsletters, and delete any of them.
-Other settings are locked until the project is back to normal.
+To make room, either reduce usage or upgrade:
 
-A suspended project returns to normal on its own as soon as its stored data is back under every limit of its plan.
-Nothing has to be clicked, and the dashboard has a **Check again** button while you wait.
-Subscribing to, or upgrading to, a plan that holds the project's data also brings it back.
-Enabling a suspended project from the dashboard is refused with `Cannot enable a suspended service. Delete data until storage is under the plan limits, or upgrade the plan.`
+- Delete data you no longer need. The Skapi dashboard lists the project's records, files, hosting files and newsletters, and each can be deleted from there.
+- Upgrade the plan from the **Upgrade Plan** button on the project's **Plan & Usage** card.
 
-A project that is still suspended 30 days later is permanently deleted, with all of its data.
-A project with an active subscription is never deleted: it stays suspended until its data fits.
+The project's pages at [skapi.com](https://www.skapi.com) show a banner when its database or file storage is close to the limit or past it, with the figures and a link to where that data can be deleted, and another when the month's bandwidth or queued ticket runs are used up.
 
-We e-mail the project owner when a project is suspended, and again at least 7 days before it would be deleted.
-The dashboard shows which limits are over, by how much, the earliest date the project could be deleted, and a link to the page where that data can be deleted.
+On Premium nothing is refused: usage past the plan is billed as overage, below.
 
 ## Premium: overage
 
 The Premium plan has no hard stop.
-Past an included limit the excess is metered and added to your next invoice, and nothing is ever refused or suspended for going over.
+Past an included limit the excess is metered and added to your next invoice, and nothing is ever refused for going over.
 
 | Metric | Rate past the included limit |
 | --- | --- |
@@ -83,7 +84,7 @@ Past an included limit the excess is metered and added to your next invoice, and
 | E-mail sends | $1.00 per 1,000 |
 | Newsletter subscribers | $1.00 per 1,000 subscribers-month |
 | Queued ticket runs | $1.00 per 1,000 |
-| Bandwidth | $0.12 per GB, not billed yet |
+| Bandwidth | $0.12 per GB |
 | Monthly active users | Free |
 
 Storage overage is time weighted rather than a high water mark, so a project that sits over a limit for two days pays for two days and not for the month.
@@ -101,17 +102,14 @@ The log rows a ticket writes (its consumptions and their action rows) count towa
 Every plan includes a monthly bandwidth allowance, counted from CDN and storage access logs and reset at the start of each UTC month.
 Your project's current figure is on its plan card in the dashboard.
 
-Bandwidth is metered but not enforced yet.
-Requests past the allowance are still served, and Premium bandwidth past the allowance is not billed.
-Both will be announced before either is switched on.
-When enforcement is on, a Trial or Standard project past its allowance gets `EXCEED_LIMIT: Service has exceeded monthly bandwidth limit.` on downloads and hosted pages until the next month starts.
-A project is never suspended for bandwidth, and Premium is never refused.
+A Trial or Standard project past its allowance gets `EXCEED_LIMIT: Service has exceeded monthly bandwidth limit.` on downloads and hosted pages until the next month starts.
+Premium is never refused: bandwidth past its allowance is billed at $0.12 per GB.
 
 ## Email storage
 
 Newsletters you send are stored, and they count against the plan's email storage limit.
 
-On the Trial and Standard plans, exceeding email storage deletes the oldest newsletters to reclaim space, and the project is never suspended for it.
+On the Trial and Standard plans, exceeding email storage deletes the oldest newsletters to reclaim space.
 Trial includes 50 MB and Standard 1 GB.
 On the Premium plan nothing is ever deleted and the excess is billed.
 
@@ -131,10 +129,10 @@ Whenever a newsletter is refused, for this, for the per-owner Trial cap or for t
 
 Cancelling a paid plan keeps that plan until the end of the billing period.
 The project then moves to the Trial plan.
-The cancellation alone never suspends it; it is suspended only if it holds more than Trial allows on that day, and the cancel dialog in the dashboard tells you beforehand if it does.
+It is never suspended or deleted for this, even if it holds more than Trial allows: it keeps running, and writes that need more room are refused until data is reduced or the plan is upgraded again. The cancel dialog in the dashboard tells you beforehand which Trial limits it would be over.
 
 If a payment fails, the paid plan stays in place while the payment provider retries the charge.
-Only when every payment retry has failed does the project move to the Trial plan.
+Only when every payment retry has failed does the project move to the Trial plan, with the same rule: it is not suspended, and writes past a Trial limit are refused.
 
 ## Large record data
 

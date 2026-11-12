@@ -2,7 +2,6 @@
 
 :::tip
 The delete project button is only shown when the project is on the Trial plan (the Skapi dashboard shows it as Free), when its paid plan is already set to cancel at the end of the billing period, or when the project is suspended.
-A suspended project can be deleted from the dashboard, which is also true while it is waiting out its 30 day deletion clock.
 :::
 
 You can delete your project from the project settings page.
