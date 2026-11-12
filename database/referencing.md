@@ -102,7 +102,7 @@ More on unique ID can be found in [Unique ID](/database/unique-id.md).
 
 ## Fetching every record that references a record
 
-A signed-in user can leave out `table` and fetch the records referencing a record in **every** table and access group they can read, in one request.
+A signed-in user can leave out `table` and fetch the records referencing a record in **every** table, in one request.
 
 ```js
 skapi.getRecords({
@@ -112,7 +112,18 @@ skapi.getRecords({
 });
 ```
 
-The list holds what the same user could fetch table by table: public records, records in access groups up to their own, their own private records, and subscription records they uploaded. To narrow it to one table, name the table with its access group, `table: { name: 'Comments', access_group: 1 }`, one call per group. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
+Which records it returns depends on whether the user has **private access** to the record they name, the record being referenced:
+
+| The user ... | The list holds |
+|---|---|
+| has **no** private access to it | the referencing records in access groups `0` up to the user's own access group. **No** private records, not even the user's own. |
+| **has** private access to it: they uploaded it, or it was shared with them with [`grantPrivateRecordAccess()`](/api-reference/database/README.md#grantprivateaccess) | **every** referencing record: access groups `0` to `99` and every private record, whatever the user's own access group. |
+
+Either way, subscription records come back only when the user uploaded them.
+
+This is the same rule as for any private record that references another record (see [Private Records](/database/access-restrictions.md#private-records)): private access to the referenced record opens the records attached to it, and being able to read it is not enough, so a public record opens none of them. To read your own private records that reference a record you have no private access to, name the table with `access_group: 'private'`.
+
+To narrow it to one table, name the table with its access group, `table: { name: 'Comments', access_group: 1 }`, one call per group. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
 
 Signed-out users still need `table`. [`deleteRecords()`](/api-reference/database/README.md#deleterecords) is unchanged.
 

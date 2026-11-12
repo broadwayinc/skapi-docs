@@ -6,6 +6,7 @@
 
 - **A table object needs its `access_group`.** `getRecords()` and `deleteRecords()` refuse `table: { name }` without `access_group` before sending (`INVALID_PARAMETER: "table.access_group" is required when "table" is an object.`). A table always means one table in one group: write `table: 'name'` for public records, or `{ name, access_group }`. To read what references a record in every table and group, send `reference` without `table`. The project owner's account may still leave the group out to span every group of a table. See [The `table` shorthand and `access_group`](/database/access-restrictions.md#the-table-shorthand-and-access-group).
 - Backend (ships with the API, not the SDK): `reference` together with a table object that has no `access_group` is read as group `0` for anyone but the project owner, like any other read. 2.2.29 read it as that table across every group the user can read.
+- Backend: **`getRecords({ reference })` without `table` follows the private-access rule.** Without private access to the referenced record it returns access groups `0` up to the user's own and no private records (2.2.29 also returned the user's own private records). With private access to it (the user uploaded it, or it was shared with them) it returns every referencing record: every access group and every private record. See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 
 **2.2.31**
 
@@ -21,7 +22,7 @@
 
 **2.2.29**
 
-- **Every record that references a record, in one request.** A signed-in user can call `getRecords({ reference })` without `table` and get the referencing records in every table and access group they can read (public, groups up to their own, their own private records, and subscription records they uploaded). `table: { name }` without `access_group` narrows it to one table across the same groups, where it used to return public records only (removed again in 2.2.32: a table names its access group). Apps that called `getRecords()` once per table to find a record's children can make one call instead. Needs the backend update that ships with it; signed-out users still need `table`, and `deleteRecords()` is unchanged. See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
+- **Every record that references a record, in one request.** A signed-in user can call `getRecords({ reference })` without `table` and get the referencing records in every table and access group they can read (public, groups up to their own, their own private records, and subscription records they uploaded; the private records changed in 2.2.32). `table: { name }` without `access_group` narrows it to one table across the same groups, where it used to return public records only (removed again in 2.2.32: a table names its access group). Apps that called `getRecords()` once per table to find a record's children can make one call instead. Needs the backend update that ships with it; signed-out users still need `table`, and `deleteRecords()` is unchanged. See [Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
 
 **2.2.28**
 
