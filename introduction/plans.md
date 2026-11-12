@@ -58,8 +58,9 @@ Only the requests that need more than the plan allows are refused, with the erro
 A project can end up past a storage limit, for example after it moves to a smaller plan; it keeps running the same way, and writes that need more room are refused until it is back under the limit.
 
 The project owner gets an e-mail when a limit reaches 80% of the plan (a usage warning) and again when it reaches 100% (limit reached).
-Each e-mail links to the project's dashboard and to the upgrade page.
-This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth and monthly queued ticket runs, on Trial and Standard.
+Each e-mail names the limit, shows the usage against it, says what happens at the limit, and links to the project's dashboard and to the upgrade page.
+This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth and monthly queued ticket runs, on Trial and Standard, one e-mail per limit.
+For email storage the e-mail says your past emails will get deleted, because full email storage deletes the oldest newsletters instead of refusing anything.
 A monthly limit starts over with the month.
 
 To make room, either reduce usage or upgrade:
@@ -67,7 +68,10 @@ To make room, either reduce usage or upgrade:
 - Delete data you no longer need. The Skapi dashboard lists the project's records, files, hosting files and newsletters, and each can be deleted from there.
 - Upgrade the plan from the **Upgrade Plan** button on the project's **Plan & Usage** card.
 
-The project's pages at [skapi.com](https://www.skapi.com) show a banner when its database or file storage is close to the limit or past it, with the figures and a link to where that data can be deleted, and another when the month's bandwidth or queued ticket runs are used up.
+The project's pages at [skapi.com](https://www.skapi.com) show a red banner when a limit is reached and an amber one when a limit is at 80% or more.
+Each banner lists the limits with their figures, says what is refused, and links to where that data can be managed.
+The red banner covers database storage, file storage, user accounts, newsletter subscribers and monthly e-mail sends; the month's bandwidth and queued ticket runs get red banners of their own once used up.
+Email storage has no banner, since nothing is refused when it is full.
 
 On Premium nothing is refused: usage past the plan is billed as overage, below.
 
