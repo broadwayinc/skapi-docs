@@ -1,14 +1,11 @@
 # Version History
 
-### Current version: 2.2.35
-
-**2.2.35**
-
-- **TypeScript: `table.access_group` is required** in the `getRecords()` and `deleteRecords()` query types. A table is always a name and an access group together, which the SDK has enforced at runtime since 2.2.32; now a missing group is a compile-time error too. `table: 'name'` (public records) is unchanged. `postRecord()` is unchanged: there a missing group means public when creating and "keep the record's group" when updating. See [What a query needs](/database/fetch.md#what-a-query-needs).
+### Current version: 2.2.34
 
 **2.2.34**
 
-- Documentation only: the `table` option now explains, in your editor, what a query needs. A table is always a name and an access group together; `index` and `tag` always need it; only `record_id`, `unique_id` and `reference` (a record ID, a unique ID, or your own user ID) work without it. See [What a query needs](/database/fetch.md#what-a-query-needs).
+- **TypeScript: `table.access_group` is required** in the `getRecords()` and `deleteRecords()` query types. A table is always a name and an access group together, which the SDK has enforced at runtime since 2.2.32; now a missing group is a compile-time error too. `table: 'name'` (public records) is unchanged. `postRecord()` is unchanged: there a missing group means public when creating and "keep the record's group" when updating.
+- The `table` option now explains, in your editor, what a query needs: `index` and `tag` always need the table; only `record_id`, `unique_id` and `reference` (a record ID, a unique ID, or your own user ID) work without it. See [What a query needs](/database/fetch.md#what-a-query-needs).
 
 **2.2.33**
 
