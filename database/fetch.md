@@ -24,7 +24,6 @@ Every `getRecords()` call reads by **one** of these, and only some of them need 
 
 ```js
 table: { name: 'notes', access_group: 'authorized' }  // one table, one access group
-table: 'notes'                                        // short for { name: 'notes', access_group: 'public' }
 table: { name: 'notes' }                              // refused: "table.access_group" is required
 ```
 

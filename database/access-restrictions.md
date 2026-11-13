@@ -3,8 +3,8 @@
 
 Skapi database allows you to set access restrictions on records. This allows you to control who can access your records.
 
-You can add additional settings to your `table` parameter by using an `object` instead of a `string` in your `config.table`.
-This allows you to set access restrictions on records using the `access_group` parameter.
+A table is always written as an object with its `name` and its `access_group`. The `access_group` sets who can access
+the records.
 
 The following values can be set for `table.access_group`:
 
@@ -15,8 +15,6 @@ The following values can be set for `table.access_group`:
 - `authorized`: The record will only be accessible to users who are logged into your project. (Equivalent to number 1)
 - `admin`: The record will only be accessible to admins (access groups `90` ~ `99`) and the project owner. (Equivalent to number 99)
 
-
-If `access_group` is not set, what happens depends on **which form** the table was written in, because a table written as a plain string is not the same request as a table object with the `access_group` key left out. See [The `table` shorthand and `access_group`](#the-table-shorthand-and-access-group) below.
 
 ::: tip
 Users can only access records that have an access group that is the same or a lower number than the access group defined in their user profile.
@@ -36,49 +34,28 @@ You can read more about [referencing records](/database/referencing.md).
 Anonymous (unsigned) users can only create records with `access_group` set to `public`.
 :::
 
-## The `table` shorthand and `access_group`
+## Table and access group
 
-Everywhere a `table` is accepted, it can be written two ways, and the two do **not** mean the same thing when no
-`access_group` is given.
-
-Writing the table as a plain **string** is shorthand that pins access group `0` (`public`):
+A table means one table in one access group, so `getRecords()` and `deleteRecords()` take both together:
 
 ```js
-// These two calls are identical. The string form fills in access_group: 0 for you.
-await skapi.getRecords({ table: 'notes' });
-await skapi.getRecords({ table: { name: 'notes', access_group: 0 } });
+await skapi.getRecords({ table: { name: 'notes', access_group: 'public' } });  // public records of 'notes'
+await skapi.getRecords({ table: { name: 'notes', access_group: 1 } });         // its 'authorized' records
+await skapi.getRecords({ table: { name: 'notes' } });                          // refused: "table.access_group" is required
 ```
 
-That is true on `getRecords()`, on `deleteRecords()`, and on a `postRecord()` that **creates** a record (one called
-without a `record_id`). It is worth being deliberate about on a delete: `deleteRecords({ table: 'notes' })` does not
-empty the table, it deletes your public records in it, and the records the same table holds at any other access group
-are left exactly where they are.
+A delete works the same way: `deleteRecords({ table: { name: 'notes', access_group: 'public' } })` deletes your
+public records in `notes`, and the records the table holds in any other access group are left where they are.
 
-Written as an **object**, the table must name its group: `{ name, access_group }`. A table always means one table
-in one access group. From skapi-js 2.2.32, `getRecords()` and `deleteRecords()` refuse a table object without
-`access_group` before sending (`INVALID_PARAMETER`). To read what references a record across every table and group,
-send `reference` without `table`. See [What a query needs](/database/fetch.md#what-a-query-needs).
-
-```js
-await skapi.getRecords({ table: 'notes' });                             // public records only
-await skapi.getRecords({ table: { name: 'notes', access_group: 1 } });  // one group, named
-await skapi.getRecords({ table: { name: 'notes' } });                   // refused: "table.access_group" is required
-```
-
-An older SDK still sends a table object without a group; the backend reads it as group `0`, with or without
-`reference`.
-
-A listing that spans every group includes the `private` records of your users, and those come back with their
-`data` withheld. That is true of every way of listing them, so an admin tool reads the whole table without
-reading anyone's private payload. See [Private Records](#private-records).
+To read what references a record across every table and access group, send `reference` without `table`. Which calls
+need a table at all is in [What a query needs](/database/fetch.md#what-a-query-needs).
 
 ::: warning
-On an **update**, neither form sends an access group. `postRecord(data, { record_id, table: 'notes' })` and
-`postRecord(data, { record_id, table: { name: 'notes' } })` both leave the record in whatever access group it is
-already in, and the backend fills the group back in from the stored record. This is what makes an update safe to write
-without repeating the group every time. To actually **move** a record between groups, name the group you want:
-`table: { name: 'notes', access_group: 'private' }`. Be aware that moving a record in or out of `'private'` is not a
-metadata change, see [Encrypting Private Record Data](/database/encryption.md).
+On an **update**, `postRecord(data, { record_id, table: { name: 'notes' } })` leaves the record in the access group it
+is already in: the group is filled back in from the stored record, so an update never has to repeat it. To **move** a
+record between groups, name the group you want: `table: { name: 'notes', access_group: 'private' }`. Moving a record in
+or out of `'private'` is not a metadata change, see [Encrypting Private Record Data](/database/encryption.md). When a
+record is **created**, an `access_group` left out means `public`.
 :::
 
 ## Creating Record With Access Restrictions

@@ -10,11 +10,9 @@ postRecord(
     config: {
         record_id?: string; // Used only when updating an existing record; not available to anonymous users. This can also be a unique ID if the record was created with one.
         unique_id?: string; // Unique ID to set to the record; not available to anonymous users. If null is given, it will remove the previous unique ID when updating.
-        /** When the table is given as a string value, the value is the table name. */
         /** 'table.name' is optional when 'record_id' or 'unique_id' is used. */
-        /** CREATE (no 'record_id'): a table given as a string sets table.name and pins table.access_group to 0 ('public'). */
-        /** UPDATE ('record_id' given): no access group is sent in either form, and the record stays in the access group it is already in. Name the group to move it. */
-        /** A table object sends only the keys that were written, so leaving 'access_group' out of it sends none. See [Access Restrictions](/database/access-restrictions.md#the-table-shorthand-and-access-group) */
+        /** CREATE (no 'record_id'): 'access_group' left out means 'public'. */
+        /** UPDATE ('record_id' given): 'access_group' left out keeps the record in the access group it is already in. Name the group to move it. See [Access Restrictions](/database/access-restrictions.md#table-and-access-group) */
         table?: {
             name?: string; // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
             access_group?: number | 'private' | '*' | 'public' | 'authorized' | 'admin';  // Default: 'public', otherwise not available to anonymous users. '*' is shorthand for 'private'.
@@ -196,9 +194,9 @@ getRecords(
     query: {
         record_id?: string; // When record ID is given, it will fetch the record with the given record ID. all other parameters are bypassed and will override unique ID.
         unique_id?: string; // Unique ID of the record. When unique ID is given, it will fetch the record with the given unique ID. All other parameters are bypassed.
-        /** A table is always a name AND an access group: one table, one group. The string form is short for { name, access_group: 'public' }. */
+        /** A table is always a name AND an access group: one table, one group. */
         /** 'table' is needed for everything except 'record_id', 'unique_id' and 'reference' (a record ID, a unique ID, or your own user ID). 'index' and 'tag' always need it. See [What a query needs](/database/fetch.md#what-a-query-needs) */
-        table?: string | {
+        table?: {
             name: string, // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
             access_group: number | 'private' | '*' | 'public' | 'authorized' | 'admin'; // Required with name. 0 to 99 if using number. 'public' = 0, 'authorized' = 1, 'admin' = 99, '*' = 'private'.
             subscription?: string; // User ID that requester is subscribed to. (eg. "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
@@ -352,10 +350,9 @@ deleteRecords({
 
     /** Delete bulk records by query. Query will be bypassed when "record_id" is given. */
     /** When deleteing records by query, It will only delete the record that user owns. */
-    /** When the table is given as a string value, the value is the table name, and table.access_group is pinned to 0 ('public'). A string table therefore deletes the PUBLIC records of that table, not the whole table. */
-    /** A table is always a name AND an access group: one table, one group. See [What a query needs](/database/fetch.md#what-a-query-needs) */
+    /** A table is always a name AND an access group: one table, one group. It deletes in that one access group only. See [What a query needs](/database/fetch.md#what-a-query-needs) */
     /** 'table' is optional when 'record_id' or 'unique_id' is used. */
-    table: string | {
+    table?: {
         name: string,
         access_group: number | 'private' | '*' | 'public' | 'authorized' | 'admin'; // Required. 0 to 99 if using number. 'public' = 0, 'authorized' = 1, 'admin' = 99, '*' = 'private'.
         subscription?: string; // User ID that requester is subscribed to. (eg. "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
