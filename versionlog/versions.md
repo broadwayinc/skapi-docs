@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.34
+### Current version: 2.2.35
+
+**2.2.35**
+
+- **TypeScript: `table.access_group` is required** in the `getRecords()` and `deleteRecords()` query types. A table is always a name and an access group together, which the SDK has enforced at runtime since 2.2.32; now a missing group is a compile-time error too. `table: 'name'` (public records) is unchanged. `postRecord()` is unchanged: there a missing group means public when creating and "keep the record's group" when updating. See [What a query needs](/database/fetch.md#what-a-query-needs).
 
 **2.2.34**
 
