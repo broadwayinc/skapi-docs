@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.33
+### Current version: 2.2.34
+
+**2.2.34**
+
+- Documentation only: the `table` option now explains, in your editor, what a query needs. A table is always a name and an access group together; `index` and `tag` always need it; only `record_id`, `unique_id` and `reference` (a record ID, a unique ID, or your own user ID) work without it. See [What a query needs](/database/fetch.md#what-a-query-needs).
 
 **2.2.33**
 
