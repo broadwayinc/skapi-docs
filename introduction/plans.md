@@ -58,9 +58,9 @@ Only the requests that need more than the plan allows are refused, with the erro
 A project can end up past a storage limit, for example after it moves to a smaller plan; it keeps running the same way, and writes that need more room are refused until it is back under the limit.
 
 The project owner gets an e-mail when a limit reaches 80% of the plan (a usage warning) and again when it reaches 100% (limit reached).
-Each e-mail names the limit, shows the usage against it, says what happens at the limit, and links to the project's dashboard and to the upgrade page.
+Each e-mail names the limit and shows the usage against it. What happens at the limit is in a highlighted panel, amber for the warning and red once the limit is reached, and the main button opens the project's upgrade page, with a link to its dashboard below.
 This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth and monthly queued ticket runs, on Trial and Standard, one e-mail per limit.
-For email storage the e-mail says your past emails will get deleted, because full email storage deletes the oldest newsletters instead of refusing anything.
+For email storage the e-mail says your oldest emails get deleted, because full email storage deletes the oldest newsletters instead of refusing anything.
 A monthly limit starts over with the month.
 
 To make room, either reduce usage or upgrade:
