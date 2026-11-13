@@ -5,6 +5,38 @@ This page collects everything the rest of the documentation no longer describes:
 New code never needs any of it. It is here for when you maintain code written against an older name or version, or support users who have not upgraded yet.
 When each change shipped is listed in the [Version History](/versionlog/versions.md).
 
+## table as a string in getRecords() and deleteRecords()
+
+**Deprecated in skapi-js 2.2.35.** In `getRecords()` and `deleteRecords()`, write the table as an object with its
+access group. A table is always one table in one access group, so the two always go together:
+
+| deprecated | use |
+|---|---|
+| `table: 'notes'` | `table: { name: 'notes', access_group: 'public' }` |
+
+```js
+// Before
+await skapi.getRecords({ table: 'notes' });
+await skapi.deleteRecords({ table: 'notes' });
+
+// After
+await skapi.getRecords({ table: { name: 'notes', access_group: 'public' } });
+await skapi.deleteRecords({ table: { name: 'notes', access_group: 'public' } });
+```
+
+**The string form still works, and means what it always meant:** the **public** records of that table (access
+group `0`). `deleteRecords({ table: 'notes' })` deletes your public records in `notes`, and leaves the records the
+table holds in any other access group where they are. Since 2.2.35 the SDK says so once per page load, with
+`console.warn`:
+
+```
+skapi-js: table: "<name>" in getRecords() and deleteRecords() is deprecated. Write the access group with the name: table: { name: "<name>", access_group: "public" }.
+```
+
+In TypeScript the string form is no longer in the `getRecords()` and `deleteRecords()` types since 2.2.34, so it
+is a compile error. A table object without `access_group` is refused before it is sent since 2.2.32
+(`"table.access_group" is required`). See [What a query needs](/database/fetch.md#what-a-query-needs).
+
 ## clientSecretRequest() is now forwardRequest()
 
 [`forwardRequest(form, options)`](/api-reference/api-bridge/README.md#forwardrequest) and its companions replace the `clientSecretRequest()` family.

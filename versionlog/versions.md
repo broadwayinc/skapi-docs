@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.34
+### Current version: 2.2.35
+
+**2.2.35**
+
+- **Deprecated: `table: 'name'` in `getRecords()` and `deleteRecords()`.** Write the table as an object with its access group: `table: { name: 'name', access_group: 'public' }`. A table is always a name and an access group together. The string form still works the same way, reading and deleting the **public** records of that table, and the SDK now says once per page load (with `console.warn`) that it is deprecated. It left the TypeScript types and the documentation in 2.2.34. See [Deprecated: table as a string](/deprecated/deprecated.md#table-as-a-string-in-getrecords-and-deleterecords).
 
 **2.2.34**
 
