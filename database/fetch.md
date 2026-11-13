@@ -8,6 +8,29 @@ It takes two arguments:
     Specifies additional configuration options for fetching database records
     For more information, see [Database Fetch Options](/database/fetch.md#database-fetch-options).
 
+## What a query needs
+
+Every `getRecords()` call reads by **one** of these, and only some of them need a `table`:
+
+| You give | `table` |
+|---|---|
+| `record_id` or `unique_id` | Not needed. It fetches that one record. |
+| `reference`: a record ID or unique ID | Not needed: without `table` it searches every table ([who sees what](/database/referencing.md#fetching-every-record-that-references-a-record)). Add a `table` to read one table and one access group. |
+| `reference`: **your own** user ID | Not needed: every record you uploaded, in every table. |
+| `reference`: another user's user ID | **Required.** |
+| nothing else (list a table), `index`, `tag`, or `subscription` | **Required.** |
+
+**A table is always a name and an access group, together.**
+
+```js
+table: { name: 'notes', access_group: 'authorized' }  // one table, one access group
+table: 'notes'                                        // short for { name: 'notes', access_group: 'public' }
+table: { name: 'notes' }                              // refused: "table.access_group" is required
+```
+
+**`index` and `tag` always need the table.** They search inside one table and one access group, so a query with
+`index` or `tag` must also have `table` with both `name` and `access_group`.
+
 ### Fetching Records from a Table
 
 ```js

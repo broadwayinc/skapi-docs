@@ -123,7 +123,7 @@ Which records it returns depends on whether the user has **private access** to t
 
 This is the same rule as for any private record that references another record (see [Private Records](/database/access-restrictions.md#private-records)): private access to the referenced record opens the records attached to it, and being able to read it is not enough, so a public record opens none of them. To read your own private records that reference a record you have no private access to, name the table with `access_group: 'private'`.
 
-To narrow it to one table, name the table with its access group, `table: { name: 'Comments', access_group: 1 }`, one call per group. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
+Which calls need a `table` at all is in [What a query needs](/database/fetch.md#what-a-query-needs). To narrow it to one table, name the table with its access group, `table: { name: 'Comments', access_group: 1 }`, one call per group. Use this instead of calling [`getRecords()`](/api-reference/database/README.md#getrecords) once per table: one request replaces as many requests as the project has tables.
 
 Signed-out users still need `table`. [`deleteRecords()`](/api-reference/database/README.md#deleterecords) is unchanged.
 

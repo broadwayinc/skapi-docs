@@ -196,19 +196,19 @@ getRecords(
     query: {
         record_id?: string; // When record ID is given, it will fetch the record with the given record ID. all other parameters are bypassed and will override unique ID.
         unique_id?: string; // Unique ID of the record. When unique ID is given, it will fetch the record with the given unique ID. All other parameters are bypassed.
-        /** When the table is given as a string value, the given value will be set as table.name and table.access_group will be pinned to 0 ('public'). */
-        /** A table object needs 'access_group' (2.2.32): one table, one group. The project owner's account alone may leave it out, to read every group of the table. See [Access Restrictions](/database/access-restrictions.md#the-table-shorthand-and-access-group) */
-        /** 'table' is optional when 'record_id' or 'unique_id' is used, and for a signed in user reading by 'reference' (every table and access group the user can read, in one request). */
+        /** A table is always a name AND an access group: one table, one group. The string form is short for { name, access_group: 'public' }. */
+        /** 'table' is needed for everything except 'record_id', 'unique_id' and 'reference' (a record ID, a unique ID, or your own user ID). 'index' and 'tag' always need it. See [What a query needs](/database/fetch.md#what-a-query-needs) */
         table?: string | {
             name: string, // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
-            access_group: number | 'private' | '*' | 'public' | 'authorized' | 'admin'; // Required. 0 to 99 if using number. 'public' = 0, 'authorized' = 1, 'admin' = 99, '*' = 'private'.
+            access_group: number | 'private' | '*' | 'public' | 'authorized' | 'admin'; // Required with name. 0 to 99 if using number. 'public' = 0, 'authorized' = 1, 'admin' = 99, '*' = 'private'.
             subscription?: string; // User ID that requester is subscribed to. (eg. "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
         };
 
         /**
          * When unique ID is given, it will fetch the records referencing the given unique ID.
          * When record ID is given, it will fetch the records referencing the given record ID.
-         * When user ID is given, it will fetch the records uploaded by the given user ID.
+         * When user ID is given, it will fetch the records uploaded by the given user ID: your own user ID needs no 'table',
+         * another user's user ID needs 'table' (name and access_group).
          * Without 'table' (signed in users), the referencing records come from every table. The user who uploaded the referenced record,
          * and the users it was shared with, read EVERY record that references it: every access group 0 to 99, every private record and
          * every subscription record. Anyone else: access groups 0 up to their own, no private records, and subscription records only
@@ -216,6 +216,7 @@ getRecords(
          */
         reference?: string | { record_id?: string; unique_id?: string; user_id?: string };
 
+        /** 'index' searches inside one table and one access group: it needs 'table' with name and access_group. */
         index?: {
             /** Reserved names: '$updated' | '$uploaded' | '$referenced_count' | '$user_id'. */
             /** Custom names: 1..256 characters, where / ! * # % each count as 3. Block control chars and sentinel U+10FFFF, and cannot start with '$'. */
@@ -226,7 +227,7 @@ getRecords(
             range?: string | number | boolean; // String range: 0..256 chars. Blocks control chars and sentinel U+10FFFF only.
         };
 
-        tag?: string; // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
+        tag?: string; // Needs 'table' with name and access_group. 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF.
     },
     fetchOptions?: FetchOptions;
 ): Promise<DatabaseResponse<RecordData>>
@@ -352,7 +353,7 @@ deleteRecords({
     /** Delete bulk records by query. Query will be bypassed when "record_id" is given. */
     /** When deleteing records by query, It will only delete the record that user owns. */
     /** When the table is given as a string value, the value is the table name, and table.access_group is pinned to 0 ('public'). A string table therefore deletes the PUBLIC records of that table, not the whole table. */
-    /** A table object needs 'access_group' (2.2.32): one table, one group. The project owner's account alone may leave it out, to delete across every group of the table. See [Access Restrictions](/database/access-restrictions.md#the-table-shorthand-and-access-group) */
+    /** A table is always a name AND an access group: one table, one group. See [What a query needs](/database/fetch.md#what-a-query-needs) */
     /** 'table' is optional when 'record_id' or 'unique_id' is used. */
     table: string | {
         name: string,

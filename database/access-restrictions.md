@@ -57,20 +57,16 @@ are left exactly where they are.
 Written as an **object**, the table must name its group: `{ name, access_group }`. A table always means one table
 in one access group. From skapi-js 2.2.32, `getRecords()` and `deleteRecords()` refuse a table object without
 `access_group` before sending (`INVALID_PARAMETER`). To read what references a record across every table and group,
-send `reference` without `table`, see
-[Fetching every record that references a record](/database/referencing.md#fetching-every-record-that-references-a-record).
-
-The **project owner's** account is the one exception: it may leave `access_group` out, and the call then spans every
-access group in the table. That is what a dashboard or an admin tool that wants a whole table uses.
+send `reference` without `table`. See [What a query needs](/database/fetch.md#what-a-query-needs).
 
 ```js
 await skapi.getRecords({ table: 'notes' });                             // public records only
 await skapi.getRecords({ table: { name: 'notes', access_group: 1 } });  // one group, named
-await skapi.getRecords({ table: { name: 'notes' } });                   // project owner only: every group
+await skapi.getRecords({ table: { name: 'notes' } });                   // refused: "table.access_group" is required
 ```
 
-An older SDK still sends a table object without a group; for anyone but the project owner the backend reads it as
-group `0`, with or without `reference`.
+An older SDK still sends a table object without a group; the backend reads it as group `0`, with or without
+`reference`.
 
 A listing that spans every group includes the `private` records of your users, and those come back with their
 `data` withheld. That is true of every way of listing them, so an admin tool reads the whole table without
