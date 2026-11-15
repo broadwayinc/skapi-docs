@@ -44,7 +44,7 @@ let params = {
     // birthdate, // The user's birthdate in the format "YYYY-MM-DD".
     // phone_number, // The user's phone number.
     // email_public, // The user's email is public if this is set to true. The email should be verified.
-    // phone_number_public, // The user's phone number is public if this is set to true. The phone number should be verified.
+    // phone_number_public, // The user's phone number is public if this is set to true.
     // address_public, // The user's address is public if this is set to true.
     // gender_public, // The user's gender is public if this is set to true.
     // birthdate_public, // The user's birthdate is public if this is set to true.

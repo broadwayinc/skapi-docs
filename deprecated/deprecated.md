@@ -5,6 +5,40 @@ This page collects everything the rest of the documentation no longer describes:
 New code never needs any of it. It is here for when you maintain code written against an older name or version, or support users who have not upgraded yet.
 When each change shipped is listed in the [Version History](/versionlog/versions.md).
 
+## Phone number verification (removed)
+
+**Removed in skapi-js 2.3.0.** `verifyPhoneNumber()` is gone, together with the project's phone verification
+SMS text (the **Phone verification SMS** box on the dashboard and the `template_sms_verification` project
+setting). Skapi no longer sends text messages of any kind.
+
+**Why:** Skapi does not support verification methods that do not scale and can be costly for its users.
+Every phone verification was a paid text message, priced by country, and sending them in every region
+needs carrier registration country by country. To protect an account, Skapi supports
+[two-step login with an authenticator app (MFA)](/authentication/mfa.md) instead: it costs nothing per
+login and works the same in every country.
+
+What changes:
+
+- Calling `skapi.verifyPhoneNumber()` throws `TypeError: skapi.verifyPhoneNumber is not a function` in 2.3.0
+  and later. Older versions still have the method, but the backend no longer sends the code.
+- `phone_number` stays a profile field: users can still save their phone number with
+  [`updateProfile()`](/user-account/update-account.md), stored as given.
+- `phone_number_public` no longer needs a verified number, the same as `address_public`.
+- `phone_number_verified` is no longer set by anything. An account verified earlier keeps `true` until its
+  phone number changes.
+- `setProjectSettings` (MCP) and the dashboard no longer take `template_sms_verification`; a request that
+  still sends it is refused with `INVALID_REQUEST` (`Key "template_sms_verification" is invalid.`).
+
+```js
+// Before
+await skapi.verifyPhoneNumber();               // sent a text message with a code
+await skapi.verifyPhoneNumber({ code });       // verified the number
+
+// After: protect the account with an authenticator app
+let { uri } = await skapi.setupMFA();          // show uri as a QR code
+await skapi.enableMFA({ code });               // a code from the app
+```
+
 ## table as a string in getRecords() and deleteRecords()
 
 **Deprecated in skapi-js 2.2.35.** In `getRecords()` and `deleteRecords()`, write the table as an object with its

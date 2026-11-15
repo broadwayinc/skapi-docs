@@ -35,7 +35,7 @@ In the `Automated Emails` page, select an email type you want to set the templat
 
 - **Verification E-Mail**
   
-  Sent with a one-time code by [`verifyEmail()`](/api-reference/user/README.md#verifyemail) for an unverified email address. A phone number is verified by a text message instead, whose wording is the project's [SMS text](#the-sms-text-for-phone-verification).
+  Sent with a one-time code by [`verifyEmail()`](/api-reference/user/README.md#verifyemail) for an unverified email address.
 
 - **Forgot Password E-Mail** (the **Forgot password** tab)
   
@@ -210,9 +210,7 @@ Every value is an optional non empty `string`. Any other type, including an empt
 override the welcome e-mail while leaving the signup confirmation alone.
 
 Each key names a template of its own type: `verification` a Verification E-Mail template, `forgot_password`
-a Forgot Password E-Mail template. The [SMS text](#the-sms-text-for-phone-verification) has no per-call
-override: `verifyPhoneNumber()` always sends the project's SMS text, and a `template` option passed to it
-has no effect.
+a Forgot Password E-Mail template.
 
 :::warning
 `option.template.signup_confirmation` requires `option.signup_confirmation` to be set on the same
@@ -266,28 +264,15 @@ template of that type, or to the built-in default when none is set, and the e-ma
 
 ## Built-in defaults
 
-A type with no template in use sends Skapi's built-in default, in your project's name. The three
+A type with no template in use sends Skapi's built-in default, in your project's name. The two
 messages that carry a code have these defaults:
 
 | Message | Subject | Body |
 |---|---|---|
 | Verification E-Mail | `[${service_name}] Verification code` | `Your verification code is ${code}` |
 | Forgot Password E-Mail | `[${service_name}] Password reset code` | `Your password reset code is ${code}` |
-| Phone verification SMS | none | `[${service_name}] Your verification code is ${code}` |
 
-Deleting the template in use, or clearing the SMS text, sends that message's default again.
-
-## The SMS text for phone verification
-
-A phone number is verified by a text message, not an email, so its wording is not a template you send
-to an address: it is one line of text the project owner sets on the dashboard. Open the project, click
-**Automated Emails**, open the **Verification** tab and find the box **Phone verification SMS**. Type the
-text and click **Save**; **Reset to default** clears it.
-
-- `${code}` is **required**: it is where the verification code goes. `${service_name}` is optional and becomes your project's name. No other placeholder is filled in.
-- The text is at most **160 characters**, one SMS segment. Control characters other than a line break are removed.
-- An **empty string** clears the setting, and the built-in default is sent again.
-- Project owner only, like every other template. Set it on the dashboard, or have your agent set it through the [Skapi MCP server](/introduction/getting-started.md#connecting-the-skapi-mcp-server)'s `setProjectSettings` tool, whose `template_sms_verification` follows the same rules. There is no per-call override: `verifyPhoneNumber()` always sends this text.
+Deleting the template in use sends that message's default again.
 
 ## Template Placeholders
 

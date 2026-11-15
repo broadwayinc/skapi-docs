@@ -56,6 +56,7 @@ The rule covers every method that acts on another account:
 - [`updateUserAttributes()`](/api-reference/admin/README.md#updateuserattributes), and [`updateProfile()`](/api-reference/user/README.md#updateprofile) with another user's `user_id`
 - [`blockAccount()`](/api-reference/admin/README.md#blockaccount) and [`unblockAccount()`](/api-reference/admin/README.md#unblockaccount)
 - [`deleteAccount()`](/api-reference/admin/README.md#deleteaccount)
+- [`disableUserMFA()`](/api-reference/admin/README.md#disableusermfa)
 
 The refusal is the same everywhere, and nothing in the request is changed:
 
@@ -93,6 +94,7 @@ This is the older, narrower rule, and it is what an access group `99` target ans
 - **Your profile.** Nobody, the project owner and access group `99` admins included, may edit their own account with [`updateUserAttributes()`](/api-reference/admin/README.md#updateuserattributes). Use [`updateProfile()`](/api-reference/user/README.md#updateprofile) with no `user_id`, the same call any user makes. `updateProfile()` given your own `user_id` still ignores it and updates your own profile, exactly as before.
 - **Your access group.** `grantAccess()` refuses your own `user_id` with `User cannot self grant access.`
 - **Blocking.** `blockAccount()` and `unblockAccount()` refuse your own `user_id` with `User cannot block self.` and `User cannot unblock self.`
+- **Your MFA.** `disableUserMFA()` refuses your own `user_id` with `Use disableMFA() to turn off your own MFA.` Turn your own off with [`disableMFA()`](/api-reference/authentication/README.md#disablemfa).
 - **Deleting.** [`deleteAccount()`](/api-reference/admin/README.md#deleteaccount) with your own `user_id` deletes your own account. It is not ranked, because it is your own account, and it is irreversible. A user who is not an admin leaves the project with [`disableAccount()`](/user-account/disable-recover-account.md#disabling-account) instead.
 
 ### Accounts of other projects
@@ -436,7 +438,7 @@ Every message below is the exact text the server returns, and every code is the 
 | `INVALID_REQUEST` | `No access.` | Any admin method called by an account that is not an admin, and any method aimed at an account of another project |
 | `INVALID_REQUEST` | `Invalid access.` | The SDK, before the request leaves, when the signed in account is below access group `90` |
 | `INVALID_REQUEST` | `User needs to login.` | The SDK, before the request leaves, when nobody is signed in |
-| `INVALID_REQUEST` | `No access to modify admin.` | `grantAccess()`, `updateUserAttributes()`, `updateProfile()` with another `user_id`, `blockAccount()`, `unblockAccount()`, `deleteAccount()` |
+| `INVALID_REQUEST` | `No access to modify admin.` | `grantAccess()`, `updateUserAttributes()`, `updateProfile()` with another `user_id`, `blockAccount()`, `unblockAccount()`, `deleteAccount()`, `disableUserMFA()` |
 | `INVALID_REQUEST` | `No access to expel admin.` | `grantAccess()` on an access group `99` account |
 | `INVALID_REQUEST` | `Cannot grant an access group higher than your own.` | `grantAccess()` |
 | `INVALID_REQUEST` | `Cannot give a user an access group higher than your own.` | `createAccount()`, `inviteUser()` |
@@ -460,8 +462,9 @@ Every message below is the exact text the server returns, and every code is the 
 | `INVALID_REQUEST` | `E-mail sending is turned off for this project because of spam complaints.` | `inviteUser()`, `resendInvitation()`, while the project's newsletter sending is turned off for complaints |
 | `INVALID_REQUEST` | `User cannot block self.` | `blockAccount()` with your own `user_id` |
 | `INVALID_REQUEST` | `User cannot unblock self.` | `unblockAccount()` with your own `user_id` |
+| `INVALID_REQUEST` | `Use disableMFA() to turn off your own MFA.` | `disableUserMFA()` with your own `user_id` |
 | `INVALID_REQUEST` | `Admin access only.` | `deleteAccount()` on another account, from an account that is not an admin |
-| `NOT_EXISTS` | `User does not exists.` | `grantAccess()`, `blockAccount()`, `unblockAccount()`, `deleteAccount()` |
+| `NOT_EXISTS` | `User does not exists.` | `grantAccess()`, `blockAccount()`, `unblockAccount()`, `deleteAccount()`, `disableUserMFA()` |
 | `NOT_EXISTS` | `User not found` | `updateUserAttributes()`, `updateProfile()` with another `user_id` |
 
 ### Records and files

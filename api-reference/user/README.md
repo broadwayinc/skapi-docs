@@ -83,7 +83,7 @@ verifyEmail(params?: SubmitEvent | {
 }): Promise<string>
 ```
 
-An anonymous account made with [`anonymousLogin()`](/api-reference/authentication/README.md#anonymouslogin) is refused with `INVALID_REQUEST` (`Anonymous accounts cannot verify an e-mail or a phone number.`): a temporary account stays temporary. See [Anonymous Login](/authentication/anonymous-login.md#what-an-anonymous-account-cannot-do).
+An anonymous account made with [`anonymousLogin()`](/api-reference/authentication/README.md#anonymouslogin) is refused with `INVALID_REQUEST` (`Anonymous accounts cannot verify an e-mail.`): a temporary account stays temporary. See [Anonymous Login](/authentication/anonymous-login.md#what-an-anonymous-account-cannot-do).
 
 #### Errors
 ```ts

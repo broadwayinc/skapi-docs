@@ -389,6 +389,33 @@ Tick the blocked accounts, click the **Unblock users** icon, then **Unblock**. F
 
 *Unblock Users.*
 
+## Turning Off a User's MFA
+
+A user who turned on [two-step login](/authentication/mfa.md) and then lost their phone cannot log in: resetting the password does not turn it off. Admins turn it off for them with the [`disableUserMFA()`](/api-reference/admin/README.md#disableusermfa) method. The user then logs in with their password alone and can set it up again.
+
+When the request is successful, the string "SUCCESS: MFA has been disabled for the user." is returned.
+
+```js [JS]
+skapi.disableUserMFA(
+    {
+        user_id: 'xxx...' // User ID of the account that lost its authenticator app.
+    },
+).then(response => {
+    console.log(response);
+    /*
+    Returns:
+    "SUCCESS: MFA has been disabled for the user."
+    */
+});
+```
+
+It follows the same rule as blocking: an admin in access groups `90` ~ `98` is refused an account in
+the same access group as their own or a higher one with `No access to modify admin.` Your own
+`user_id` is refused with `Use disableMFA() to turn off your own MFA.`: a logged-in user turns their
+own off with [`disableMFA()`](/api-reference/authentication/README.md#disablemfa).
+
+The dashboard has no button for this; call it from an admin account with the SDK.
+
 For the full policy, including what neither admins nor the project owner can do, see
 [Admin Permissions](/admin/permissions.md).
 

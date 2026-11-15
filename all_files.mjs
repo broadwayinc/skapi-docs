@@ -48,6 +48,7 @@ export let method_ref = [
             { text: 'Signing Up Users', link: '/authentication/create-account.md' },
             { text: 'Signup Confirmation', link: '/authentication/signup-confirmation.md' },
             { text: 'Login / Logout', link: '/authentication/login-logout.md' },
+            { text: 'Two-Step Login (MFA)', link: '/authentication/mfa.md' },
             { text: 'User Profile', link: '/authentication/user-info.md' },
             { text: 'Forgot Password', link: '/authentication/forgot-password.md' },
             { text: 'OpenID Login', link: '/authentication/openid-login.md' },

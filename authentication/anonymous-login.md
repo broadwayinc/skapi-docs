@@ -81,11 +81,13 @@ A temporary account stays temporary. It cannot:
 
 - edit its profile with [`updateProfile()`](/api-reference/user/README.md#updateprofile),
 - change its password with [`changePassword()`](/api-reference/user/README.md#changepassword), or reset it with [`forgotPassword()`](/api-reference/authentication/README.md#forgotpassword),
-- verify an e-mail or a phone number with [`verifyEmail()`](/api-reference/user/README.md#verifyemail) or `verifyPhoneNumber()`,
+- verify an e-mail with [`verifyEmail()`](/api-reference/user/README.md#verifyemail),
 - subscribe to newsletters,
 - disable itself with [`disableAccount()`](/api-reference/user/README.md#disableaccount) or be recovered.
 
 Each of these fails with `INVALID_REQUEST` and a message starting with `Anonymous accounts cannot`. The refusal holds on the server as well, so a call made around the SDK is refused too.
+
+It cannot use [two-step login](/authentication/mfa.md) either: `setupMFA()`, `enableMFA()`, `disableMFA()` and `getMFAStatus()` are refused the same way by the SDK.
 
 Everything the feature is for stays allowed: records, files, realtime, subscriptions to other users, tickets, [`getProfile()`](/api-reference/authentication/README.md#getprofile) and [`logout()`](/api-reference/authentication/README.md#logout).
 

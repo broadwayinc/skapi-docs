@@ -5,10 +5,14 @@ When the user forgets their password, they can request a verification code to re
 
 :::warning
 If the user's email is not verified, they will not be able to receive a verification code and may lose access to their account permanently.
-The reset code is always sent by email, even when the account has a verified phone number.
+The reset code is always sent by email.
 
 It is recommended to encourage users to verify their email addresses.
 For more info on email verification, see [E-Mail Verification](/user-account/email-verification.md).
+:::
+
+:::info
+Resetting the password does not turn off [two-step login](/authentication/mfa.md). A user who lost their authenticator app needs an admin to turn it off with [`disableUserMFA()`](/admin/account.md#turning-off-a-user-s-mfa).
 :::
 
 ## Step 1: Request Verification Code

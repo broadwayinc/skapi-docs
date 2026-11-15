@@ -87,6 +87,10 @@ permanent login ID and keeps working even after the email is changed. See
 [E-Mail and username](/authentication/create-account.md#e-mail-and-username) for when email login
 starts, and the one case where it is not enabled.
 
+## Two-Step Login
+
+When a user has turned on two-step login with an authenticator app, [`login()`](/api-reference/authentication/README.md#login) rejects with the code `MFA_REQUIRED` after checking the password, and [`verifyMFA()`](/api-reference/authentication/README.md#verifymfa) finishes the login with the 6 digit code from the app. See [Two-Step Login (MFA)](/authentication/mfa.md).
+
 ## Auto Login
 
 By default, once user login to your website, their login session is maintained until they logout.

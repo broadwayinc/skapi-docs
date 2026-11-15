@@ -506,6 +506,34 @@ unblockAccount(params: {
 }
 ```
 
-For all three methods a [disabled](/user-account/disable-recover-account.md) account counts with the
+## disableUserMFA
+
+```ts
+disableUserMFA(params: {
+    user_id: string; // An admin in access groups 90 ~ 98 can turn it off only for accounts in a lower access group than their own.
+}): Promise<'SUCCESS: MFA has been disabled for the user.'>
+```
+
+Turns off a user's [two-step login](/authentication/mfa.md), for a user who lost their authenticator app. See [Turning Off a User's MFA](/admin/account.md#turning-off-a-user-s-mfa).
+
+#### Errors
+```ts
+{
+  code: 'INVALID_REQUEST';
+  message: "No access to modify admin."; // The caller is an admin in access groups 90 ~ 98 and the account's access group is the same as or higher than their own. Nothing is changed.
+}
+|
+{
+  code: 'INVALID_REQUEST';
+  message: "Use disableMFA() to turn off your own MFA.";
+}
+|
+{
+  code: 'NOT_EXISTS';
+  message: "User does not exists.";
+}
+```
+
+For all four methods a [disabled](/user-account/disable-recover-account.md) account counts with the
 access group it had before it was disabled, and admins in access group `99` and the project owner are
 not limited by the rank rule. See [Admin Permissions](/admin/permissions.md#the-rank-rule).

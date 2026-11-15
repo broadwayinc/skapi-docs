@@ -167,10 +167,114 @@ See [UserProfile](/api-reference/data-types/README.md#userprofile)
 }
 |
 {
+  code: 'MFA_REQUIRED'; // The password is correct and the account has two-step login on. Call verifyMFA() with the code from the authenticator app.
+  message: 'A code from the authenticator app is required to sign in. Call verifyMFA() with the code.';
+}
+|
+{
   code: 'REQUEST_EXCEED';
   message: 'Too many attempts. Please try again later.';
 }
 ```
+
+## verifyMFA
+
+```ts
+verifyMFA(
+    params: SubmitEvent | {
+        code: string; // The 6 digit code from the authenticator app.
+    }
+): Promise<UserProfile>
+```
+
+Finishes a login that [`login()`](#login) or [`openIdLogin()`](#openidlogin) rejected with `MFA_REQUIRED`. Call it on the same page within 3 minutes. See [Two-Step Login (MFA)](/authentication/mfa.md).
+
+See [UserProfile](/api-reference/data-types/README.md#userprofile)
+
+#### Errors
+```ts
+{
+  code: 'INVALID_CODE'; // Can be retried with the next code.
+  message: 'Incorrect authenticator code.' | 'This authenticator code was already used. Wait for the next code.';
+}
+|
+{
+  code: 'INVALID_REQUEST';
+  message: 'No sign-in is waiting for an authenticator code. Call login() first.' | 'The sign-in has expired. Call login() again.';
+}
+|
+{
+  code: 'INVALID_PARAMETER';
+  message: '"code" should be the 6 digit code from the authenticator app.';
+}
+|
+{
+  code: 'REQUEST_EXCEED';
+  message: 'Too many attempts. Please try again later.';
+}
+```
+
+## setupMFA
+
+```ts
+setupMFA(
+    options?: {
+        issuer?: string; // Name shown in the authenticator app. Default: the project name.
+        account_name?: string; // Account label shown in the app. Default: the user's e-mail, or their user ID.
+    }
+): Promise<{
+    secret: string; // The key as text, for typing into the app.
+    uri: string; // otpauth:// link. Show it as a QR code to scan.
+}>
+```
+
+Starts two-step login setup for the logged-in user. Follow it with [`enableMFA()`](#enablemfa). See [Turning it on](/authentication/mfa.md#turning-it-on).
+
+## enableMFA
+
+```ts
+enableMFA(
+    params: SubmitEvent | {
+        code: string; // The 6 digit code the authenticator app shows after scanning.
+    }
+): Promise<'SUCCESS: MFA has been enabled.'>
+```
+
+#### Errors
+```ts
+{
+  code: 'INVALID_CODE'; // Nothing changed. Can be retried with the next code.
+  message: 'Incorrect authenticator code.';
+}
+|
+{
+  code: 'INVALID_REQUEST';
+  message: 'Call setupMFA() first.';
+}
+|
+{
+  code: 'INVALID_PARAMETER';
+  message: '"code" should be the 6 digit code from the authenticator app.';
+}
+```
+
+## disableMFA
+
+```ts
+disableMFA(): Promise<'SUCCESS: MFA has been disabled.'>
+```
+
+Turns two-step login off for the logged-in user. The next login takes the password alone.
+
+## getMFAStatus
+
+```ts
+getMFAStatus(): Promise<{
+    enabled: boolean; // true when the logged-in user has two-step login on.
+}>
+```
+
+`setupMFA()`, `enableMFA()`, `disableMFA()` and `getMFAStatus()` need a logged-in user (`INVALID_REQUEST`: `User login is required.`) and refuse anonymous accounts (`INVALID_REQUEST`, message starting with `Anonymous accounts cannot`).
 
 ## getProfile
 
@@ -222,7 +326,7 @@ See [Anonymous Login](/authentication/anonymous-login.md).
 }
 ```
 
-An anonymous account cannot edit its profile, change or reset its password, verify an e-mail or a phone number, subscribe to newsletters, or disable itself: those methods fail with `INVALID_REQUEST` and a message starting with `Anonymous accounts cannot`.
+An anonymous account cannot edit its profile, change or reset its password, verify an e-mail, subscribe to newsletters, or disable itself: those methods fail with `INVALID_REQUEST` and a message starting with `Anonymous accounts cannot`.
 
 ## verifyAnonymousSession
 

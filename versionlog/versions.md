@@ -1,6 +1,16 @@
 # Version History
 
-### Current version: 2.2.36
+### Current version: 2.3.0
+
+**2.3.0**
+
+- **Removed: phone number verification.** `verifyPhoneNumber()` is gone, and so is the project's phone verification SMS text (`template_sms_verification`, the **Phone verification SMS** box on the dashboard). Skapi does not support verification methods that do not scale and can be costly for its users: every code was a paid text message, priced by country. To protect an account, use [two-step login with an authenticator app (MFA)](/authentication/mfa.md) instead. `phone_number` stays a profile field (stored as given), `phone_number_public` no longer needs a verified number, and `phone_number_verified` is no longer set. Skapi now sends no text messages at all. See [Phone number verification (removed)](/deprecated/deprecated.md#phone-number-verification-removed).
+- **One dependency fewer, and a smaller browser build.** The SDK no longer uses the `amazon-cognito-identity-js` package (and the five packages it pulled in): sign-in, sessions and token refresh now run on the SDK's own code, which talks to the same login service in the same way. The browser build (`skapi.js`, `skapi.browser.mjs`) is about 19% smaller (286 KB instead of 355 KB, 87 KB instead of 106 KB gzipped), and `npm install skapi-js` installs fewer packages. Nothing changes in how you call any method: errors, codes and messages are the same, and sign-in still never sends the password itself (the same SRP exchange as before). **Users stay signed in when you upgrade:** the session is saved under the same names as before, so a session from an older version opens in this one, and the other way round. Works on plain `http://` pages too, as before.
+
+**2.2.37**
+
+- **Two-step login with an authenticator app (MFA).** Each user can protect their account with an authenticator app: [`setupMFA()`](/api-reference/authentication/README.md#setupmfa) returns a QR code link to scan and [`enableMFA()`](/api-reference/authentication/README.md#enablemfa) turns it on after checking a code from the app. From then on [`login()`](/api-reference/authentication/README.md#login) rejects with the new code `MFA_REQUIRED` after checking the password, and [`verifyMFA()`](/api-reference/authentication/README.md#verifymfa) finishes the login with the 6 digit code. [`getMFAStatus()`](/api-reference/authentication/README.md#getmfastatus) and [`disableMFA()`](/api-reference/authentication/README.md#disablemfa) show and turn it off. It is optional and off for every account until the user turns it on; logins of accounts without it are unchanged. Codes are never sent by SMS. See [Two-Step Login (MFA)](/authentication/mfa.md).
+- **Admins can turn off a user's MFA** with [`disableUserMFA()`](/api-reference/admin/README.md#disableusermfa), for a user who lost their phone: resetting the password does not turn it off. It follows [the rank rule](/admin/permissions.md#the-rank-rule). Needs the backend update that ships with it. See [Turning Off a User's MFA](/admin/account.md#turning-off-a-user-s-mfa).
 
 **2.2.36**
 
