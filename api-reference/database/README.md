@@ -415,7 +415,7 @@ When you already know the exact name, omitting `condition` is the exact match yo
 **No sign-in required**: served to any caller that knows the project ID. The project's [Require Login](/service-settings/service-settings.md#require-login) setting does not apply to this listing.
 
 Table **names** are never filtered by access group: every table in the project is listed.
-The per access group record counters are filtered to the caller: `number_of_records_in_access_group_public` for everyone, the counters up to and including the caller's own access group for a signed in user, and `number_of_records_in_access_group_private` and `number_of_records_in_access_group_admin` for admins and the project owner.
+The per access group record counters are filtered to the caller: `number_of_records_in_access_group_public` for everyone, the counters up to and including the caller's own access group for a signed in user, every numbered counter (`number_of_records_in_access_group_admin` included) for admins and the project owner, and `number_of_records_in_access_group_private` for the project owner only.
 `number_of_records` and `size` are **not** filtered and stay totals over every access group, so `number_of_records` is normally larger than the counters you can see add up to.
 See [Table Information](/database/table-info.md).
 

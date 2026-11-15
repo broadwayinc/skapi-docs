@@ -97,7 +97,7 @@ Records that describe a part of that file can extend its ID with `#` or `::`, fo
 Deleting a file also deletes the records under its ID, so the prefix is reserved:
 
 - The project owner and admins can set any unique ID that starts with `src::`.
-- A signed in user who is not an admin can only set `src::<their user ID>/...`, which names a file in their own upload folder.
+- A signed in user who is not an admin can only set `src::<their user ID>/...`, which names a file in their own upload folder, and `src::__MEDIA__/<their user ID>/...`, which names a picture extracted from one of those files.
 - Any other unique ID that starts with `src::` is refused with an `INVALID_REQUEST` error.
 
 A record that already has a `src::` unique ID can be updated by anyone who is allowed to write it, as long as the unique ID is left unchanged.
