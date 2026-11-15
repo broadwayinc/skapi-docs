@@ -1,6 +1,10 @@
 # Version History
 
-### Current version: 2.2.35
+### Current version: 2.2.36
+
+**2.2.36**
+
+- **Node.js: sign-in works with `import` on older Node versions.** On Node 18, Node 20.0 to 20.15 and Node 22.0 to 22.2, `import { Skapi } from 'skapi-js'` could not save anything, so a correct email and password still ended signed out (`login()` rejected right after Cognito accepted the password). The SDK now keeps the session in memory on those versions, for as long as the process runs; it is not saved to `./states/localStorage/`, so a restarted process signs in again. Node 20.16+ and 22.3+, `require('skapi-js')` on any Node version, and browsers were not affected and are unchanged.
 
 **2.2.35**
 
