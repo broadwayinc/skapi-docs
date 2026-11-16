@@ -157,7 +157,15 @@ skapi.getConnectionInfo().then(info => {
             freeze_database: boolean, // The database is read-only
             prevent_signup: boolean, // Sign-up is blocked
             prevent_inquiry: boolean, // Inquiries are blocked
-            prevent_anonymous: boolean // Anonymous users cannot write to the database
+            prevent_anonymous: boolean, // Anonymous users cannot write to the database
+            require_login: boolean, // Signed-out visitors cannot read the database (REQUIRE_LOGIN)
+            anonymous_login: boolean // Visitors may sign in with a temporary account (anonymousLogin())
+        },
+        // Only when Skapi was created with the `encryption` option and a user is signed in:
+        encryption_recovery: {
+            code: "GDQ9-0MZS-X7AV-6YG5-8Z76-4CJ1-PWG0", // The user's encryption recovery code, on the first call
+                                                    // after their first login with encryption on; null after that
+            message: "This is your encryption recovery code. Save it now: it is shown only this once. ..."
         }
     }
     */
@@ -185,7 +193,15 @@ skapi.getConnectionInfo().then(info => {
             freeze_database: boolean, // The database is read-only
             prevent_signup: boolean, // Sign-up is blocked
             prevent_inquiry: boolean, // Inquiries are blocked
-            prevent_anonymous: boolean // Anonymous users cannot write to the database
+            prevent_anonymous: boolean, // Anonymous users cannot write to the database
+            require_login: boolean, // Signed-out visitors cannot read the database (REQUIRE_LOGIN)
+            anonymous_login: boolean // Visitors may sign in with a temporary account (anonymousLogin())
+        },
+        // Only when Skapi was created with the `encryption` option and a user is signed in:
+        encryption_recovery: {
+            code: "GDQ9-0MZS-X7AV-6YG5-8Z76-4CJ1-PWG0", // The user's encryption recovery code, on the first call
+                                                    // after their first login with encryption on; null after that
+            message: "This is your encryption recovery code. Save it now: it is shown only this once. ..."
         }
     }
     */

@@ -5,6 +5,20 @@ the database. The keys are derived from the user's own password and never leave 
 so the service provider running the backend cannot read the contents of a record its owner
 keeps to themselves.
 
+::: danger A lost password means lost data
+**If a user loses their password, their encrypted private data is lost.** Resetting the
+password gets them back into their account, but it cannot open their encrypted records.
+Nobody can recover them: not you, and not Skapi.
+
+The **only** way back is the user's [encryption recovery code](#encryption-recovery-codes),
+and only if they saved it **while they still had access to their account**: the code shown
+once at their first login with encryption on, or a new one from
+`regenerateEncryptionRecoveryCode()`. Once the password is lost, a code can no longer be made.
+
+Before you turn encryption on, make sure your app shows the code to your users and tells them
+to keep it, and warn them in your password reset flow.
+:::
+
 This is off by default, and the guarantee is narrower than "your data is encrypted". Read
 this whole page before turning it on. In particular:
 
@@ -15,7 +29,8 @@ this whole page before turning it on. In particular:
 - The strength is capped by the user's password, because Web Crypto offers no memory-hard KDF.
 - **Sharing** a record involves a public key that the provider serves, which is a weaker
   footing than the rest of the design and needs to be described accurately to a customer.
-- A forgotten password with no recovery code and no unlocked device means the data is gone.
+- A forgotten password with no saved [encryption recovery code](#encryption-recovery-codes)
+  and no unlocked device means the data is gone.
 
 ## What is protected, and what is not
 
@@ -79,12 +94,23 @@ Both are bounded by **password entropy**, because the Web Crypto API offers only
 Argon2id, no memory-hard KDF). Skapi's default minimum password is six characters, and a
 six-character password falls to an offline attack in minutes.
 
-If you are making this promise to a customer, set `minPasswordLength` and enforce a real
-password policy in your signup form. A user who keeps their [recovery
-code](#recovery-codes) is better off, since that is 128 random bits rather than a
+Encryption works with any valid account password, so it is exactly as strong as the password
+the user chose. **When you use client-side encryption, encourage your users to use longer
+passwords**, for example with a hint in your signup and password-change forms. A user who keeps their [encryption recovery
+code](#encryption-recovery-codes) is better off, since that is 128 random bits rather than a
 memorable string, but the password remains the floor for anyone who does not.
 
 ## Turning it on
+
+::: warning Users who log in with OpenID cannot use encryption
+An OpenID user ([`openIdLogin()`](/authentication/openid-login.md)) never sets a password: their
+account password is created by Skapi. A key made from it would not protect anything from the
+provider, so their encryption stays locked with the reason `OPENID_UNSUPPORTED`. On an app
+with encryption on, that means an OpenID user **cannot save records with
+`access_group: 'private'`** (the save fails with `ENCRYPTION_LOCKED`), and encrypted records
+shared with them read as `data: null`. Their other records work as usual. If your app offers
+OpenID login, do not rely on private records for those users.
+:::
 
 ```js
 const skapi = new Skapi("<Project ID>", { encryption: true });
@@ -103,9 +129,8 @@ With options:
 const options = {
     encryption: {
         iterations: 600000,      // PBKDF2 cost. Default 600000, minimum 100000.
-        minPasswordLength: 12,   // refuse to enroll a weaker password. Default 0 (off).
         persistDevice: true,     // stay unlocked across a page reload. Default true.
-        recovery: 'code',        // issue a one-time recovery code. Default 'code'.
+        recovery: 'code',        // issue an encryption recovery code. Default 'code'. 'none' turns it off.
         trustPolicy: 'tofu',     // 'tofu' (default) or 'strict'. See Sharing.
         withheld: 'null'         // 'null' (default) or 'sentinel'. See below.
     }
@@ -177,12 +202,13 @@ The order is what makes each direction safe to interrupt:
 
 | Direction | Order | If it dies halfway |
 | --- | --- | --- |
-| `private` to anything | files first, then the group flip | still private, some files already plaintext. Readable, and re-running finishes it |
+| `private` to anything | files first, then the group flip | if any file fails to upload, the copies that did upload are removed and the update is refused with the upload's error: the record stays private with its original files. Re-running it finishes the job |
 | anything to `private` | group flip first, then the files | private with its data sealed, some files still in the clear. Less protected than intended, nothing lost |
 
 Neither is atomic and neither can be: a group change is one write, and every file is a
 separate object. What they are is **monotonic**. No interruption destroys content, and
-re-running the same update completes the job.
+re-running the same update completes the job. An original file is only removed once its
+converted copy has uploaded.
 
 ::: warning This costs requests
 A group change on a record with attachments downloads, re-encodes and re-uploads every one
@@ -293,6 +319,24 @@ await skapi.removePrivateRecordAccess({
 
 Revocation is **forward-only**. It cannot un-read what they already read, and if they kept
 a copy of the old ciphertext and their old wrap, that copy stays readable to them forever.
+
+The record's attached files are encrypted again under the new key as part of the revoke:
+each one is downloaded, decrypted, encrypted under the new key and uploaded, and the old
+copies are removed by the same write that rolls the key. On a record with many large files a
+revoke costs that much transfer.
+
+**The key rolls first, and access is removed after.** If a file cannot be downloaded or
+uploaded, the call throws `ENCRYPTION_DATA_UNAVAILABLE` (or the upload error) before anything
+changes: the record, its files and the user's access stay exactly as they were, and you can
+call it again. In the rare case where the key rolled but removing the access then failed, the
+user still has access to the record but no key for it; calling it again removes the access.
+
+Uploads work only in the browser, so in **Node** a revoke on a record with encrypted attached
+files is refused before anything changes. Revoke those from a browser. A revoke on a record
+with no attached files works in Node.
+
+Other reads your app has running while a grant or a revoke is in progress return the record
+decrypted as usual. They never receive the raw encrypted data.
 
 ::: warning A group change clears grants
 Moving a record into or out of `'private'` removes every grant on it. See
@@ -478,6 +522,11 @@ never open the file.
 
 Reading the record still fetches the ciphertext, of course. That is the data.
 
+Each update writes a new payload file and removes the old one. Records updated with
+skapi-js 2.3.1 or earlier can hold more than one; the SDK reads the newest (by its upload
+time), falls back to the others if it does not open, and removes the extra files on the
+record's next update. A record that shrinks below the threshold has its payload file removed.
+
 Three details worth knowing:
 
 - **It happens on update, not on create.** A newly created record has no id yet, so there is
@@ -617,6 +666,24 @@ await skapi.lockEncryption({ forgetDevice: true }); // and require the password 
   a token restore.
 - The user called `lockEncryption({ forgetDevice: true })`.
 
+`unlockEncryption()` only opens encryption that is already set up. Encryption is set up at the
+user's first login **with their password**, so for an account that has never done that (for
+example, one only ever restored from tokens), `unlockEncryption()` is refused with `NOT_EXISTS`:
+log in with the password once to start using encryption. This way the data can never be sealed
+under a mistyped password.
+
+A lock always wins over an unlock that is still running. If `lockEncryption()` (or a logout)
+happens while `unlockEncryption()` or the automatic unlock at page load is still working, the
+session stays locked, and that `unlockEncryption()` call throws `ENCRYPTION_LOCKED`.
+
+**Unlocking also repairs the user's published key.** When a user logged in for the first time
+on two devices at once, earlier versions could leave a second public key behind that nobody
+holds, and other users then shared records to that key. When the user unlocks, the SDK
+publishes their real public key again and removes the stray one. A peer who had already
+pinned the stray fingerprint gets `ENCRYPTION_PEER_KEY_CHANGED` on their next share with this
+user and must pin the new fingerprint with `pinPeerKey()` (see
+[Fingerprint pinning](#the-three-mitigations-in-increasing-order-of-cost)).
+
 ## Changing a password
 
 `changePassword` re-wraps the master key for the new password before Cognito changes it, so
@@ -635,7 +702,7 @@ await skapi.changePassword({ current_password: currentPassword, new_password: ne
 
 ## The two hard trade-offs
 
-### 1. A password reset destroys the data unless the user has their recovery code
+### 1. A password reset destroys the data unless the user saved their encryption recovery code
 
 Changing a password (with the old one in hand) is free, as above.
 
@@ -643,7 +710,7 @@ Changing a password (with the old one in hand) is free, as above.
 control of an email address, not knowledge of the old password, so there is nothing to
 unwrap the master key with. The records stay encrypted and unreadable.
 
-That is what the recovery code is for. See below.
+That is what the encryption recovery code is for. See below.
 
 This is not a gap, it is the guarantee. If an email code could recover the data, the
 provider could recover it too, and the claim above would be false.
@@ -665,26 +732,78 @@ the ACL level. They receive it with `data` withheld, as described above.
 This is not a gap to work around. A backend that could read these records is a backend that
 could read them for anyone, and the guarantee at the top of this page would be false.
 
-## Recovery codes
+## Encryption recovery codes
 
-At enrollment the SDK mints a one-time recovery code and shows it to you **once**. It is the
-only thing standing between a forgotten password and permanent data loss.
+**When a user forgets their password and resets it, they lose access to their encrypted
+private records, unless they saved their encryption recovery code.** The code is the only
+way back.
 
-### Collecting it
+A user can get a code in two ways, and both work **only while they still have access**:
+
+1. **Shown once, at setup.** The first time the user logs in with their password on an app
+   created with `encryption` on, Skapi creates their code. The next
+   [`getConnectionInfo()`](/api-reference/connection/README.md#getconnectioninfo) returns it in
+   `encryption_recovery.code`, one time only.
+2. **A new one, any time, with `regenerateEncryptionRecoveryCode()`.** For a user who missed
+   or lost the first code. It needs the user to be logged in and unlocked, and it retires the
+   previous code.
+
+Once the password is lost, neither works: a locked-out user cannot get a code.
+
+The encryption recovery code is not the code `forgotPassword()` emails. That one resets the
+account password. This one is a separate code the user keeps, and it unlocks their encrypted
+data.
+
+### Showing it at setup
+
+Call `getConnectionInfo()` right after login, and show the code if there is one:
 
 ```js
-const user = await skapi.login({ email, password });
+await skapi.login({ email, password });
 
-const recoveryCode = skapi.takeRecoveryCode();
-if (recoveryCode) {
-    // Show it. Make the user confirm they saved it before continuing.
-    // This is the only time it will ever exist.
+const { encryption_recovery } = await skapi.getConnectionInfo();
+if (encryption_recovery?.code) {
+    // First login with encryption on: the only time the code is shown.
+    console.log(encryption_recovery.message); // "This is your encryption recovery code. Save it now: ..."
+    console.log(encryption_recovery.code);    // "GDQ9-0MZS-X7AV-6YG5-8Z76-4CJ1-PWG0"
 }
 ```
 
-`takeRecoveryCode()` returns the code and forgets it. There is deliberately no way to fetch
-it again, and no "resend my code" endpoint. If either existed, the SDK (and therefore the
-service provider) would be holding the key.
+`encryption_recovery` is there only when the instance was created with `encryption` and a user
+is signed in. Its `message` says what to do:
+
+| `encryption_recovery` | When |
+| --- | --- |
+| `{ code: 'GDQ9-...', message }` | The first call after the code was created. The code is forgotten as it is returned. |
+| `{ code: null, message }` | Every later call. The message says the code cannot be shown again and to call `regenerateEncryptionRecoveryCode()` for a new one. |
+| `{ code: null, message }` | Encryption is locked: unlock first, then a new code can be issued. |
+| `{ code: null, message }` | The app turned codes off with `recovery: 'none'`. |
+
+The code is created in the browser and never stored anywhere readable, so it can only be shown
+at the moment it is created. There is deliberately no way to fetch it again, and no "resend my
+code" endpoint. If either existed, the SDK (and therefore the service provider) would be
+holding the key. If the page reloads before your app shows it, it is gone, and the user needs
+a new one from `regenerateEncryptionRecoveryCode()`.
+
+`lockEncryption()` does not discard a code your app has not collected yet: the next
+`getConnectionInfo()` still returns it, once. A logout does discard it.
+
+### Issuing a new one
+
+Give users a way to get a new code while they still have access, for example a button in
+their account settings:
+
+```js
+const { encryptionRecoveryCode } = await skapi.regenerateEncryptionRecoveryCode();
+// Show it. The previous code stops working.
+```
+
+This requires an **unlocked** session, which is the whole access-control story: the only way
+to create a code is to already be able to decrypt. There is no path here that helps someone who
+is locked out, and none that lets the provider create one. It is cheap: it rewrites the user's
+keyring and touches none of their records.
+
+### What the code looks like
 
 The code looks like `GDQ9-0MZS-X7AV-6YG5-8Z76-4CJ1-PWG0`: 128 bits of entropy in Crockford
 base32, so no `I`, `L`, `O` or `U` to misread, plus two check characters. Parsing is
@@ -707,54 +826,43 @@ nobody can verify that it forgot.
 
 Because the code is high entropy, it is derived with **HKDF, not PBKDF2**. PBKDF2's 600,000
 iterations exist because human passwords are guessable; 128 random bits are not, so
-stretching would only make recovery slow. A practical consequence: for a user who keeps their
-code, the recovery path is **stronger** than their password.
+stretching would only make unlocking with it slow. A practical consequence: for a user who
+keeps their code, unlocking with it is **stronger** than unlocking with their password.
 
 ### Using it after a forgotten password
 
-The sequencing is not obvious and you have to get it right. `forgotPassword` and
-`resetPassword` are unauthenticated: there is no session during a reset, so the keyring
-cannot be touched then. Recovery happens on the **next login**:
+`forgotPassword` and `resetPassword` work without a session, so the keyring cannot be touched
+during a reset. The encryption recovery code is used on the **next login**, once:
 
 ```js
-// 1. the normal reset flow, unchanged
+// 1. the normal reset flow, with the code from the EMAIL
 await skapi.forgotPassword({ email });
-await skapi.resetPassword({ email, code, new_password });
+await skapi.resetPassword({ email, code: emailCode, new_password });
 
-// 2. log in with the new password. Encryption will be LOCKED, because the
-//    keyring is still wrapped under the password they forgot.
+// 2. log in with the new password. Encryption is LOCKED, because the
+//    keyring is still sealed under the password they forgot.
 await skapi.login({ email, password: new_password });
 skapi.getEncryptionStatus(); // { status: 'locked', reason: 'NO_SESSION_KEY' }
 
-// 3. the recovery code repairs it
-const res = await skapi.unlockWithRecoveryCode({
-    code: whatTheUserTyped,
+// 3. the saved ENCRYPTION RECOVERY CODE unlocks it
+const res = await skapi.unlockEncryptionWithRecoveryCode({
+    code: savedEncryptionRecoveryCode,
     password: new_password        // pass it, or the next login is locked again
 });
 
-res.status;        // 'unlocked'
-res.repaired;      // true: the keyring now opens with the new password
-res.recoveryCode;  // a REPLACEMENT code. Show it, the old one is dead.
+res.status;                  // 'unlocked'
+res.repaired;                // true: the keyring now opens with the new password
+res.encryptionRecoveryCode;  // a NEW code. Show it: the one just used stops working.
 ```
 
-Passing `password` is what makes this self-healing. Omit it and the current session unlocks,
-but the keyring is still wrapped under the forgotten password and the next login is locked
-all over again.
+Passing `password` is what makes this a one-time step. It re-seals the data under the new
+password, so every later login, on any device, unlocks normally. Omit it and only the current
+session unlocks: the next login is locked all over again.
 
-### Rotation
+A used code has been in a clipboard and possibly a screenshot, so it is retired on use and the
+new one comes back in `encryptionRecoveryCode`.
 
-A used code has been in a clipboard and possibly a screenshot, so it is retired on use and a
-replacement is returned. You can also rotate on demand:
-
-```js
-const { recoveryCode } = await skapi.regenerateRecoveryCode();
-```
-
-This requires an **unlocked** session, which is the whole access-control story: the only way
-to mint a code is to already be able to decrypt. There is no path here that helps someone who
-is locked out, and none that lets the provider mint one.
-
-### Opting out
+### Turning codes off
 
 ```js
 encryption: { recovery: 'none' }
@@ -766,9 +874,10 @@ genuinely what you want.
 
 ## Other limits worth knowing
 
-- **OpenID accounts get no protection.** Their "password" is minted by the skapi backend,
+- **OpenID accounts cannot use encryption.** Their "password" is minted by the skapi backend,
   so a key derived from it gives no confidentiality against the provider. Those sessions
-  stay locked, with reason `OPENID_UNSUPPORTED`.
+  stay locked, with reason `OPENID_UNSUPPORTED`: they cannot save private records (the save
+  fails with `ENCRYPTION_LOCKED`), and encrypted records shared with them read as `data: null`.
 - **Admin-created accounts** start on a provider-issued password. That password should be
   changed before the user stores anything sensitive.
 - **Plain http does not work.** `crypto.subtle` requires a secure context, so a page served
@@ -782,7 +891,12 @@ genuinely what you want.
   (`postRecord(null, { record_id, ... })`) is still fine and leaves the payload alone.
 - **Updating a shared record needs decrypt access.** The existing key wraps are read off the
   record and carried forward, so a session that cannot decrypt it is refused rather than
-  allowed to write an update that would silently un-share it.
+  allowed to write an update that would silently un-share it. Every update of an encrypted
+  record reads it first, even in a session that read it a moment ago, so a revoke or a grant
+  made on another device is carried forward instead of overwritten. For a large record that
+  read includes its payload file. An update that writes data without stating the table reads
+  the record's real access group too, instead of trusting the one this session saw last, so a record
+  another device made non-private is never sealed again by mistake.
 - **Logging out clears the device key.** The next session on that browser needs the password
   again.
 - **Cross-project writes are refused.** The key is derived per project; use a separate
@@ -801,7 +915,7 @@ For the record, and so an auditor does not have to reverse-engineer it:
   to *trust* rather than verify, which is why
   [key substitution](#key-substitution-the-residual-risk-in-sharing) is discussed at length
   above.
-- A one-time **recovery code**, 128 bits from the browser's CSPRNG, wrapping the master key
+- An **encryption recovery code**, 128 bits from the browser's CSPRNG, wrapping the master key
   via HKDF. Never transmitted, and stored only as that wrap.
 - The master key **sealed under itself** (`self` in the keyring), so a session holding only
   the non-extractable key handle can still recover the raw bytes when it needs to mint a new

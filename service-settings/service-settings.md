@@ -38,9 +38,7 @@ Skapi provides API bridge to your custom APIs.
 
 For example, you might have your own external server that you want your users to connect to.
 
-You can set your own secret key to protect your own APIs from unauthorized access.
-
-For more information, refer [secure post request](/api-bridge/secure-post-request.html#secure-post-request) to your custom APIs.
+To protect your own APIs from unauthorized access, store a key on the [Secret Keys](/api-bridge/client-secret-request.md#registering-secret-keys) page and send the requests with [`forwardRequest()`](/api-bridge/forward-request.md), which puts the key in a header your API checks. The project secret key that was once set here was retired: see [The project secret key](/deprecated/deprecated.md#the-project-secret-key-api-key).
 
 
 ## Disable/Enable

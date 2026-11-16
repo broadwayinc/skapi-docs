@@ -1,6 +1,61 @@
 # Version History
 
-### Current version: 2.3.1
+### Current version: 2.4.0
+
+**2.4.0**
+
+Breaking changes (removed or renamed):
+
+- **Removed: `secureRequest()`.** Send requests to your own API with [`forwardRequest()`](/api-bridge/forward-request.md) instead: store a key on the [Secret Keys](/api-bridge/client-secret-request.md#registering-secret-keys) page and put `$CLIENT_SECRET` in a header your API checks, with `skapiHeaders: true` to tell it who is calling. See [The project secret key](/deprecated/deprecated.md#the-project-secret-key-api-key).
+- **Removed: `takeRecoveryCode()`.** The encryption recovery code is now shown once, in [`getConnectionInfo()`](/api-reference/connection/README.md#getconnectioninfo) as `encryption_recovery.code`: the first call after the code was created returns it, and every later call returns `code: null` with a `message` saying what to do. See [Encryption recovery codes](/database/encryption.md#encryption-recovery-codes).
+- **Renamed: `regenerateRecoveryCode()` is now `regenerateEncryptionRecoveryCode()`**, and it resolves with `{ encryptionRecoveryCode }` instead of `{ recoveryCode }`.
+- **Renamed: `unlockWithRecoveryCode()` is now `unlockEncryptionWithRecoveryCode()`**, and it resolves with `{ status, repaired, encryptionRecoveryCode }` instead of `{ status, repaired, recoveryCode }`. See [Using it after a forgotten password](/database/encryption.md#using-it-after-a-forgotten-password).
+- **Removed: the `minPasswordLength` encryption option.** It is no longer read. Encryption is as strong as the user's password, so encourage your users to use longer passwords in your own forms.
+- **Removed: `reference_private_key` from `PostRecordConfig`.** The SDK sends the key for a referenced private record on its own.
+- **`unlockEncryption()` no longer sets up encryption.** It only opens encryption that is already set up at the user's first login with their password. For an account that never did that (for example, one only ever restored from tokens) it rejects with `NOT_EXISTS`, so data can never be sealed under a mistyped password. See [Locking and unlocking](/database/encryption.md#locking-and-unlocking).
+
+Fixes and changes:
+
+- **`getSubscriptions()` lists your own subscribers.** `{ subscription: <your own user ID> }` used to be refused with `"user_id" cannot be the user's own ID.`, a check meant for `subscribe()`. It now lists who subscribes to you, blocked users included; add `blocked: true` for only the users you blocked. A bad `subscription` value now says `User ID in "subscription" is invalid.`
+- **`lockEncryption()` keeps the device key** unless you pass `forgetDevice: true`, so the next page load unlocks again without the password, as documented. It also keeps an encryption recovery code your app has not collected yet: the next `getConnectionInfo()` still returns it, once.
+- **`getFile(url, { dataType: 'text' })` resolves with a string.** A `.json` file, or a file holding only a number, came back as an object or a number.
+- **`forwardRequest()` with `poll` and `onResponse` works again.** Since 1.6.0, `onResponse` received the `pending` status right away and polling never started (a TypeError). Polling now starts, `onResponse` is called once with the final result, and the promise resolves with that same result. See [Polling Requests](/api-bridge/polling-request.md).
+- **A throwing `onResponse` or `onError` no longer breaks a poll or a read.** The error is printed to the console and the poll still settles, so the queue behind it keeps moving. [`forwardRequestStream()`](/api-reference/api-bridge/README.md#forwardrequeststream) and `clientSecretRequestStream()` still resolve with their result instead of rejecting.
+- **A destination's own `status`, `chunks` or `more` is left alone.** A finished request whose answer carries fields with those names (an API that replies `{ "status": "pending" }`, for example) is handed back as it is, instead of being polled forever or streamed as chunks.
+- **[`cancelForwardRequest()`](/api-reference/api-bridge/README.md#cancelforwardrequest) with `queue` settles its own poll.** A poll for that request still waiting its turn in the client-side queue resolves with `{ id, status: 'stopped' }` instead of staying pending, and only that request's own queued job is removed. A poll's `stop()` stops that poll even when another reader is watching the same request.
+- **A logout always wins over a token refresh that is still running.** The refresh no longer signs the user back in; a request still waiting for the token ends with `User login is required.`
+- **An `onLogin` or `onUserUpdate` listener that throws no longer breaks sign-in.** The error is printed to the console, and the login, logout or token refresh that called it, and the other listeners, carry on.
+- **One token refresh at a time.** Requests that need a fresh token at the same moment share one refresh, and a stored token that had already expired is refreshed once instead of twice.
+- **`skapi.bearerToken` is always the current token**: the one of the session the SDK just adopted (also after `loginWithToken()`), never one from before a refresh, and empty after logout.
+- **An expired session is kept when the network is down at page load.** The page starts with no user (`onLogin` receives `null`) and the call fails with `NETWORK_ERROR`; the session is back on the next page load with network, instead of being signed out.
+- **The token is refreshed before [`changePassword()`](/api-reference/user/README.md#changepassword), [`updateProfile()`](/api-reference/user/README.md#updateprofile), [`verifyEmail()`](/api-reference/user/README.md#verifyemail) and a global [`logout()`](/api-reference/authentication/README.md#logout)**, so a session left idle past its expiry no longer fails with "User is not authenticated".
+- **A global logout signs out this device even when the server call fails.** `logout({ global: true })` then rejects with the error, so you can tell the user that the other devices may still be signed in.
+- **`verifyEmail()` after a logout** rejects with a `SkapiError` instead of reaching a signed-out account.
+- **The first login of an invited account fires `onLogin` and `onUserUpdate`**, and the account no longer waits for a signup confirmation.
+- **The profile includes `phone_number_public`** when the account has a phone number. It was always left out.
+- **`deleteFiles({ endpoints: [file.url] })` and `remove_bin` with file URLs work for any file name**, including names with spaces or non-English characters, and the `?t=` token URLs of files that are not public. They used to delete nothing for such names. One case is still read wrong: a name that literally holds an encoded sequence, such as `a%20b.pdf`, deleted through a saved `?t=` URL that the SDK did not hand out in the current session. See [Deleting Files by URL](/database/handling-files.md#deleting-files-by-url).
+- **`bulkPostRecords()` keeps each item's reference key apart.** The private access key returned for one item's referenced record was stored for every referenced record in the batch.
+- **The cached `unique_id`s are cleaned up.** After a record's `unique_id` changed, or the record was deleted, the old `unique_id` still pointed at it in this session: `getRecords({ unique_id: old })` read it and `postRecord()` with it overwrote it.
+- **"Load more" of a read by `reference` no longer starts over at page 1.**
+- **`postRecord()` no longer writes into the config object you pass.**
+- **Private access keys expire after 1 hour** and the SDK renews them on its own. A user who loses access to a private record loses it within the hour. Older SDKs keep receiving the old keys. See [Private access keys](/database/access-restrictions.md#private-access-keys).
+- **Revoking access re-encrypts the record's attached files instead of destroying them.** A key roll left the files sealed under the old key, so nobody could open them, the owner included.
+- **[`removePrivateRecordAccess()`](/api-reference/database/README.md#removeprivateaccess) on an encrypted record rolls the key first, then removes the access**, so a failure leaves the access unchanged. A revoke on a record with encrypted attached files is refused in Node, since uploads work only in the browser. See [Sharing a record](/database/encryption.md#sharing-a-record).
+- **A stale key on a second device is no longer used.** A grant or an update checks the cached data key against the stored record first, so a key rolled on another device is never written over.
+- **Large encrypted records**: the newest payload file is read (older ones are tried only if it does not open), and the stale ones are removed on the next update, also when the record shrinks below the size that needs a payload file. See [Large payloads](/database/encryption.md#large-payloads).
+- **A logout removes the saved device key** of an encrypted session, including one whose unlock was still running.
+- **A lock wins over an unlock that is still running**: the session stays locked, and that `unlockEncryption()` throws `ENCRYPTION_LOCKED`.
+- **Two devices logging in for the first time at once** no longer leave a second public key that nobody holds. Unlocking repairs an account left that way: it publishes the user's real key again and removes the stray one. A peer who pinned the stray fingerprint gets `ENCRYPTION_PEER_KEY_CHANGED` and must pin the new one.
+- **A group change of an encrypted record is all or nothing.** If a converted file fails to upload, the copies that did upload are removed, the change is refused, and the record keeps its original files. See [Changing the access group](/database/encryption.md#changing-the-access-group).
+- **Reads during a grant or a revoke get decrypted data.** Other reads your app had running at the same time could receive the raw encrypted data.
+- **An update that does not state the table no longer trusts a cached access group** when it writes data: it reads the record's real group, so a record another device made non-private is not sealed again.
+- **Package**: the license header is one line instead of the whole license text in every file, the duplicate type file `skapi.d.mts` is no longer shipped, and the source maps no longer embed the sources, which makes the download smaller.
+
+Backend (ships with the API, not the SDK):
+
+- **A forgotten-password reset signs the account out on every other device** at their next token refresh (within a day at most). See [Forgot Password](/authentication/forgot-password.md).
+- **`getSubscriptions({ subscription, blocked: true })` works.** It answered `ERROR` ("Something went wrong") for every call that combined `subscription` with `blocked: true`.
+- **Signed file links check access on every request**: subscription access for a file on a subscription record, and record access for a file on a private record. A link handed out earlier stops working for a user who has since lost that access.
 
 **2.3.1**
 

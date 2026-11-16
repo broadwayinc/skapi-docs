@@ -6,6 +6,12 @@ Skapi supports OpenID authentication through configurable OpenID Loggers.
 
 OpenID is an authentication standard that lets users sign in with an identity provider (for example, Google) instead of creating a separate password for every app.
 
+::: warning OpenID users and client-side encryption
+OpenID users cannot use [client-side encryption](/database/encryption.md#turning-it-on): their
+account password is created by Skapi, so it cannot protect their data from the provider. On an
+app created with the `encryption` option, they cannot save private records.
+:::
+
 ## Login with OpenID Profile
 
 If you have access to an OpenID provider API, you can register an OpenID Logger in your Skapi project settings.

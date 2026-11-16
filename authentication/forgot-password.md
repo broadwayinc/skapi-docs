@@ -94,6 +94,12 @@ skapi.resetPassword({
 ```
 :::
 
+A password reset signs the account out on **every other device**: each one is signed out the
+next time it refreshes its login (within a day at most). If the project uses
+[client-side encryption](/database/encryption.md#encryption-recovery-codes), a reset
+also leaves the user's encrypted private data locked unless they saved their encryption
+recovery code.
+
 For more detailed information on all the parameters and options available with the [`resetPassword()`](/api-reference/authentication/README.md#resetpassword) method, 
 please refer to the API Reference below:
 

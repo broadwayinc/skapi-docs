@@ -349,9 +349,9 @@ The [`getSubscriptions()`](/api-reference/database/README.md#getsubscriptions) m
 
 -   `subscriber`: User ID of the subscriber.
 -   `subscription`: User ID of the user being subscribed to.
--   `blocked`: Set to `true` to return only blocked subscriptions.
+-   `blocked`: Set to `true` to return only blocked subscriptions. Works with `subscriber`, with `subscription`, or with both.
 
-Provide at least one of `params.subscriber` or `params.subscription`.
+Provide at least one of `params.subscriber` or `params.subscription`. Your own user ID as `subscription` lists your own subscribers.
 
 ### Examples
 
@@ -376,6 +376,26 @@ skapi
     })
     .then((response) => {
         console.log(response.list);
+    });
+
+/**
+ * List your own subscribers, and the ones you blocked.
+ */
+skapi
+    .getSubscriptions({
+        subscription: skapi.user.user_id,
+    })
+    .then((response) => {
+        console.log(response.list);
+    });
+
+skapi
+    .getSubscriptions({
+        subscription: skapi.user.user_id,
+        blocked: true,
+    })
+    .then((response) => {
+        console.log(response.list); // the users you blocked
     });
 
 /**

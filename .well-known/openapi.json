@@ -978,15 +978,6 @@
                 "responses": { "200": { "description": "Notification sent" } }
             }
         },
-        "/api/secureRequest": {
-            "post": {
-                "tags": ["API Integration"],
-                "summary": "secureRequest(params)",
-                "description": "Make secure API requests (deprecated - use clientSecretRequest).\n\n```javascript\nskapi.secureRequest({\n  url: 'https://api.example.com/endpoint',\n  method: 'POST',\n  data: {key: 'value'}\n});\n```\n\n**Recommended:** Use `clientSecretRequest()` instead.",
-                "operationId": "secureRequest",
-                "responses": { "200": { "description": "API response" } }
-            }
-        },
         "/api/clientSecretRequest": {
             "post": {
                 "tags": ["API Integration"],

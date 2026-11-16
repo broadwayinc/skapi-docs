@@ -155,6 +155,8 @@ forwardRequestStream(
 
 `since` is there so a reader that already holds part of a response does not receive it twice. The returned promise carries a `stop()` that ends the read without touching the request, and it is registered like any other poll, so [`stopForwardRequestPolling()`](/api-reference/api-bridge/README.md#stopforwardrequestpolling) reaches it too when called with the request's `url`, `method` and `id`, or with no arguments at all.
 
+If your `onResponse` or `onError` throws, the error is printed to the console and the read still resolves with its result (or rejects with the read's own error), so a bug in a callback never turns a successful read into a failed one.
+
 Telling the two resolutions apart takes all three fields: a status envelope always carries `status`, `id` and `in_queue` **together**, and anything that does not is a finalized body. Do not test `status` alone, because the body you finalized may carry a `status` field of its own, and most destinations' responses do. This is exactly the test the SDK uses internally.
 
 :::tip
@@ -287,7 +289,7 @@ For a streamed request polled **with** `onStream` (which is what sends the curso
 - While the request is **running or pending**, that is what every tick returns, with `chunks` carrying whatever arrived since the last one.
 - Once it is **`resolved` or `failed` and not finalized**, the same shape comes back with the terminal `status`, and the chunks stay readable. This is the state `forwardRequestStream()` replays. A **`cancelled`** request is the exception: the cancel releases its chunks, so there is nothing left to replay.
 - When it **failed**, the same shape also carries an `error` field. See below.
-- Once it is **finalized**, the poll returns your stored body verbatim instead, with none of the envelope fields. The signal is the absence of `status`, `id` and `in_queue` together, not the absence of `status` on its own.
+- Once it is **finalized**, the poll returns your stored body verbatim instead, with none of the envelope fields. The signal is the absence of `status`, `id` and `in_queue` together, not the absence of `status` on its own. A destination's own answer, or a body you finalized, that has `status`, `chunks` or `more` fields of its own is handed back as it is: the SDK does not stream those chunks, read again because of `more`, or keep polling because of that `status`.
 
 `more: true` means that read was capped, not that the request is unfinished: there is more text already written and waiting. The one exception is `more: true` with an empty `chunks` and an unchanged `last_seq`: that is the server saying the chunk read itself failed, not that a page is waiting. Treat it as "nothing known this tick" and poll again rather than as a truncation. The SDK distinguishes the two: on a real cap it goes straight back round for the next page rather than spending a whole interval per page, which is how a finished request replays in one pass, while on a degraded read it waits out the interval and, after three consecutive degraded reads on a settled request, gives up and resolves with what it has. **That last case is the one to guard**: a body assembled after a degraded read can be short, so check that your own parser saw the end of the response before you finalize, or you will store a truncation and release the chunks holding the rest. `last_seq` is the cursor to send back, and it stays at the value you sent when nothing new arrived.
 

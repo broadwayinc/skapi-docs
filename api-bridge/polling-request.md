@@ -5,7 +5,7 @@ Because third-party APIs can take time to respond, `forwardRequest()` uses a que
 
 ## Automatic polling with `poll`
 
-Pass a `poll` interval (in milliseconds) together with `onResponse` and `onError` callbacks. With `poll` greater than `0`, Skapi auto-generates a queue and starts polling automatically; the final result is delivered to `onResponse` (and errors to `onError`). Note that when `onResponse` is provided, the awaited return value of `forwardRequest()` is the callback's return value, so don't rely on the returned promise for the status object in the auto-poll case. The immediate status object with a `poll()` method (`{ id, status, ... }`) is only returned when `poll` is omitted or `0` and `onResponse` is not supplied.
+Pass a `poll` interval (in milliseconds) together with `onResponse` and `onError` callbacks. With `poll` greater than `0`, Skapi auto-generates a queue and starts polling automatically; the final result is delivered to `onResponse` once (and errors to `onError`), and the returned promise resolves with that same final result. The status object with a `poll()` method (`{ id, status, ... }`) is returned only when `poll` is omitted or `0`; in that case an `onResponse` you pass is called right away with that status object.
 
 ```js
 skapi.forwardRequest({ model: 'gpt-image-1.5', prompt: 'A cute baby sea otter', n: 1, size: '1024x1024' }, {
@@ -43,16 +43,20 @@ const res = await skapi.forwardRequest({ model: 'gpt-image-1.5', prompt: 'A cute
 });
 
 // res = { id, status: 'running', queue_name, in_queue, poll }
-res.poll({
-    latency: 2000, // start polling at 2-second intervals
-    onResponse(result) {
-        console.log('Done:', result);
-    },
-    onError(err) {
-        console.error('Failed:', err);
-    }
-});
+try {
+    const result = await res.poll({ latency: 2000 }); // poll at 2-second intervals
+    console.log('Done:', result);
+}
+catch (err) {
+    console.error('Failed:', err);
+}
 ```
+
+This `poll()` takes `latency` (and `onStream` for a [streamed request](/api-bridge/streaming-request.md)). It resolves with the final result and rejects with the error, so read the outcome from the promise. The `poll()` on a [`forwardRequestHistory()`](/api-bridge/request-history.md) item also takes `onResponse` and `onError`, as shown below.
+
+If your `onResponse` or `onError` throws, the error is printed to the console and the poll still settles as usual, so the next poll on the same queue is not held up.
+
+The poll keeps going only while skapi reports the request as `running` or `pending`. Once it finishes, the poll resolves with the destination's answer, even when that answer has a `status` field of its own (an API that starts a job and replies `{ "status": "pending" }`, for example). Checking on that job is then up to you.
 
 :::warning
 Only requests with status `running` or `pending` can be polled.
@@ -63,18 +67,28 @@ A request enters `running` or `pending` only when either `params.queue` (queue n
 
 `onResponse` receives a second argument, `meta`, carrying facts about the **request** rather than about the response. A settled poll resolves with the destination's own answer, and that answer belongs to the destination: there is nowhere in it to put a value of skapi's without changing what you asked for. So request-level facts arrive beside it instead.
 
-`meta.executed` is when the worker **began running** the request, in milliseconds. Subtract it from the request's `updated` to time the call on its own:
+`meta.executed` is when the worker **began running** the request, in milliseconds. Subtract it from the request's `updated` to time the call on its own. Polling a request from [`forwardRequestHistory()`](/api-bridge/request-history.md) hands it to you:
 
 ```js
-res.poll({
-    latency: 2000,
-    onResponse(result, meta) {
-        if (meta?.executed) {
-            console.log('the call began at', new Date(meta.executed));
-        }
-        console.log('Done:', result);
-    }
+const history = await skapi.forwardRequestHistory({
+    url: 'https://api.openai.com/v1/images/generations',
+    method: 'POST'
 });
+
+const item = history.list[0];
+
+// Only a request that is still running or pending has a poll().
+if (item?.poll) {
+    item.poll({
+        latency: 2000,
+        onResponse(result, meta) {
+            if (meta?.executed) {
+                console.log('the call began at', new Date(meta.executed));
+            }
+            console.log('Done:', result);
+        }
+    });
+}
 ```
 
 Use `executed` rather than `created` when you are timing the destination. `created` is when the request was **queued**, and a queued request can sit there for a long time before a worker picks it up, so `updated - created` measures your own queue depth plus the call while `updated - executed` measures the call.
@@ -170,7 +184,7 @@ const result = await skapi.cancelForwardRequest({
 console.log(result.removed); // true if successfully removed
 ```
 
-Provide `queue` when the original request was submitted with a queue name. This removes the pending job from the client-side queue in addition to cancelling it on the server.
+Provide `queue` when the original request was submitted with a queue name. This removes the pending job from the client-side queue in addition to cancelling it on the server. If a poll for that request is still waiting its turn in the queue, it ends right away and resolves with `{ id, status: 'stopped' }`, the same as a [stopped poll](#handling-a-stopped-poll). Only that request's own queued job is removed: the other requests in the queue keep their place.
 
 :::info
 `cancelForwardRequest()` cancels the **request**. [`stopForwardRequestPolling()`](#stopping-polling)

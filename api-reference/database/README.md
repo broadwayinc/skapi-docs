@@ -300,6 +300,8 @@ removePrivateRecordAccess(
   
 ```
 
+The user cannot get a new private access key for the record after this. A key they already hold is valid for 1 hour from when it was issued, so they lose access to the record and its files within 1 hour at most. See [Private access keys](/database/access-restrictions.md#private-access-keys).
+
 #### Errors
 ```ts
 {
@@ -709,6 +711,8 @@ See [ProgressCallback](/api-reference/data-types/README.md#progresscallback)
 ```ts
 deleteFiles({
     /** Endpoint URLs of record files (the url of a BinaryFile), up to 1000. They may belong to different records of the project. */
+    /** Anything after a "?" in a URL (such as the "?t=" token on the url of a file that is not public) is ignored. */
+    /** Works for any file name (spaces, non-English characters). A name that literally holds an encoded sequence such as "a%20b.pdf", deleted through a saved "?t=" url not handed out in this session, is decoded. See [Deleting Files by URL](/database/handling-files.md#deleting-files-by-url) */
     /** A user who is not an admin can delete only the files of their own records, except files the project owner or an admin attached to them before such files were stored under the record's user. See [Files attached by another account](/database/handling-files.md#removing-files) */
     /** The project owner and admins (access groups 90 ~ 99) can also delete the files of another user's record, unless it is private. */
     /** Files on a private record can be deleted only by its user. See [Files on Records of Other Users](/database/handling-files.md#files-on-records-of-other-users) */

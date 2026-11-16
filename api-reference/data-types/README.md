@@ -164,6 +164,14 @@ type ConnectionInfo = {
     service_description: string;
     version: string;
     ai_agent: string;
+    // Only with the `encryption` option and a signed-in user. `code` is the user's
+    // encryption recovery code on the FIRST call after it was created (their first
+    // password login with encryption on), and null on every call after that.
+    // `message` says what to do. See /database/encryption.md#encryption-recovery-codes
+    encryption_recovery?: {
+        code: string | null;
+        message: string;
+    };
     conf: {
         freeze_database: boolean;
         prevent_signup: boolean;
@@ -950,7 +958,7 @@ type UserProfile = {
     approved: string;
     /** true on a temporary account made with anonymousLogin(): no e-mail, no password, deleted 30 minutes after the visitor's last keep-alive. Absent on every other account. */
     anonymous?: boolean;
-    /** Last login timestamp(Seconds). */
+    /** Last login timestamp(13 digit milliseconds). */
     log: number;
     /** Shows true when user has verified their E-Mail. */
     email_verified?: boolean;
@@ -958,7 +966,7 @@ type UserProfile = {
     phone_number_verified?: boolean;
     /** User's E-Mail is public when true. E-Mail should be verified. */
     email_public?: boolean;
-    /** User's phone number is public when true. */
+    /** User's phone number is public when true. Present when the account has a phone number. */
     phone_number_public?: boolean;
     /** User's address is public when true. */
     address_public?: boolean;
@@ -1051,7 +1059,7 @@ type UserPublic = {
     anonymous?: boolean;
     /** Account created timestamp(13 digit milliseconds). */
     timestamp: number;
-    /** Last login timestamp(Seconds). */
+    /** Last login timestamp(13 digit milliseconds). */
     log: number;
     /** Number of the user's subscribers. */
     subscribers: number;

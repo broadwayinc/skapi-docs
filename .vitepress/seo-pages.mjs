@@ -238,7 +238,7 @@ export const PAGES = {
 
     // Third-party APIs
     'api-bridge/introduction.md': {
-        description: 'The Skapi API Bridge connects your project to external APIs: forwardRequest() relays requests from Skapi servers and secureRequest() calls your own API.',
+        description: 'The Skapi API Bridge connects your project to external APIs and your own API: forwardRequest() relays requests from Skapi servers with your secret keys.',
     },
     'api-bridge/client-secret-request.md': {
         title: 'Using Third-Party APIs with Secret Keys',
@@ -261,10 +261,6 @@ export const PAGES = {
     'api-bridge/example.md': {
         title: 'OpenAI Images API Example',
         description: 'A worked example that calls the OpenAI Images API from the browser with Skapi forwardRequest(), with your OpenAI key kept on the Skapi Secret Keys page.',
-    },
-    'api-bridge/secure-post-request.md': {
-        title: 'Secure POST Requests to Your Own API',
-        description: 'Send secure POST requests to your own API with the Skapi secureRequest() method, which carries your project secret key, with Node.js and Python examples.',
     },
 
     // Tickets
@@ -354,7 +350,7 @@ export const PAGES = {
     },
     'service-settings/additional.md': {
         title: 'Basic Project Settings',
-        description: 'The basic settings of a Skapi project: its name, the CORS list of allowed domains, and the secret key sent with secure requests to your own API.',
+        description: 'The basic settings of a Skapi project: its name and the CORS list of allowed domains.',
     },
     'service-settings/deleteservice.md': {
         title: 'Deleting a Project',
@@ -412,7 +408,7 @@ export const PAGES = {
         description: 'TypeScript reference for the Skapi realtime methods: connectRealtime, postRealtime, joinRealtime, connectRTC and the push notification methods.',
     },
     'api-reference/api-bridge/README.md': {
-        description: 'TypeScript reference for the Skapi third-party API methods: forwardRequest, forwardRequestStream, forwardRequestHistory, secureRequest and polling.',
+        description: 'TypeScript reference for the Skapi third-party API methods: forwardRequest, forwardRequestStream, forwardRequestHistory, cancelForwardRequest and polling.',
     },
     'api-reference/admin/README.md': {
         description: 'TypeScript reference for the Skapi admin methods: inviteUser, grantAccess, createAccount, updateUserAttributes, deleteAccount, blockAccount and more.',

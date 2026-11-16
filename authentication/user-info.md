@@ -75,3 +75,5 @@ skapi.onUserUpdate = (profile) => {
 ```
 
 This handler is useful for updating the UI when the user logs in, logs out, or when their profile information changes.
+
+If your `onUserUpdate` callback throws, the error is printed to the console. It does not stop the other listeners, and it does not stop the login, logout or token refresh that called it.

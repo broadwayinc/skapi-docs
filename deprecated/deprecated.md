@@ -236,9 +236,9 @@ skapi.forwardRequest({ report: 'quarterly' }, {
 
 ## The project secret key (api_key)
 
-A project once had one **secret key** of its own, set on the project settings page. [`secureRequest()`](/api-bridge/secure-post-request.md) sent it to your API as `api_key` in the request body, so your API could check that the request came through Skapi.
+A project once had one **secret key** of its own, set on the project settings page. It was sent to your API as `api_key` in the request body, so your API could check that the request came through Skapi.
 
-That key was retired on 2026-10-28. The dashboard no longer offers it, no API route sets it, and `secureRequest()` no longer sends it. A request body now holds `user` and `data` only, so an API that compares `body.api_key` with its key refuses every request until it is changed.
+That key was retired on 2026-10-28. The dashboard no longer offers it, no API route sets it, and no request carries it, so an API that compares `body.api_key` with its key refuses every request until it is changed.
 
 To keep that check, send the request with [`forwardRequest()`](/api-bridge/forward-request.md) and a key from the [Secret Keys](/api-bridge/client-secret-request.md#registering-secret-keys) page. Your API then checks the header instead of the body:
 

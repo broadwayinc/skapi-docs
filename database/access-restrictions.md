@@ -166,6 +166,12 @@ Access granted users can also see all the records that is referencing this recor
 
 You can read more about [referencing records](/database/referencing.md).
 
+### Private access keys
+
+To read a private record or its files, the granted user's skapi-js holds a **private access key** for that record. The server hands one out when the user reads the record, and `getFile()` requests one for the record's files. The server checks the key without a database lookup, which keeps reads fast.
+
+A private access key is valid for **1 hour**. skapi-js renews it on its own: a key that has expired, or will within a minute, is replaced with a fresh one the next time it is needed. You do not need to handle keys yourself.
+
 ## Remove Private Access
 
 Users can remove access of their private record from other users by using the [`removePrivateRecordAccess(params)`](/api-reference/database/README.md#removeprivateaccess) method.
@@ -179,6 +185,8 @@ skapi.removePrivateRecordAccess({
     user_id: 'user_id_to_remove_access'
 })
 ```
+
+The user cannot get a new private access key for the record after this. A key they already hold keeps working until it expires, so they lose access to the record and its files **within 1 hour** at most (see [Private access keys](#private-access-keys)).
 
 ## Changing the Access Group Clears Private Access
 

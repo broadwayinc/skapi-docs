@@ -16,7 +16,7 @@ forwardRequest(
         params?: { [key: string]: string }; // Query parameters as a key-value object, and the merge target of the form for GET, DELETE and HEAD.
         multipart?: boolean; // Relay the form's own bytes, the way a browser would send them, files included, instead of flattening it to fields. Keep the encoded body under 2 MB minus 64 KB. Defaults to false.
         skapiHeaders?: boolean | { user?: boolean; service?: boolean }; // Which of "x-skapi-user" and "x-skapi-service" the destination is told. Both values are written server side from the VERIFIED identity of the request. Defaults to false.
-        poll?: number; // Optional polling interval in milliseconds. When > 0, the promise resolves immediately with the initial status object and the final result is delivered via onResponse/onError. When omitted or 0, the status object is returned with a poll() method to start polling manually. Must be a non-negative number.
+        poll?: number; // Optional polling interval in milliseconds. When > 0, polling starts automatically: onResponse is called once with the final result (errors go to onError), and the promise resolves with that final result. When omitted or 0, the status object is returned with a poll() method to start polling manually. Must be a non-negative number.
         queue?: string; // Optional queue name. Requests sharing the same queue are processed sequentially on the server side.
         expires?: number; // Optional expiration time in seconds for the request record.
         stream?: boolean; // Read the destination's response INCREMENTALLY and relay the raw bytes as they arrive, instead of downloading the whole body first. Requires a queue, and mints one when you did not name one. Never sent to the destination. Defaults to false. See Streaming below.
@@ -52,9 +52,11 @@ posting it would send them, files included, with the content type the body actua
 
 **Behavior:**
 - For non-queued requests (no `queue`), the response is returned directly and `onResponse` is also called with the result.
-- When `poll > 0`, polling starts automatically and the promise resolves with the **final** result once polling finishes, not with the status object. (If `onResponse` is supplied, the promise resolves with that callback's return value.) Errors go to `onError`. A queue is auto-generated when no `queue` was given and either `poll > 0` or `stream: true`.
-- When `poll` is `0` or omitted, the promise resolves with the status object plus a `poll()` method. Call `poll()` to start polling; results come via `onResponse`/`onError`.
-- The promise returned by `poll()` also carries a `stop()` method that stops that one poll. See [stopForwardRequestPolling](#stopforwardrequestpolling).
+- When `poll > 0`, polling starts automatically: `onResponse` is called once with the **final** result, and the promise resolves with that final result, not with the status object. Errors go to `onError`. A queue is auto-generated when no `queue` was given and either `poll > 0` or `stream: true`.
+- When `poll` is `0` or omitted, the promise resolves with the status object plus a `poll()` method. Call `poll()` to start polling; it resolves with the final result and rejects with the error. (The `poll()` on a `forwardRequestHistory()` item also takes `onResponse` and `onError`.)
+- The promise returned by `poll()` also carries a `stop()` method that stops that one poll, even when another poll or `forwardRequestStream()` is reading the same request. See [stopForwardRequestPolling](#stopforwardrequestpolling).
+- A poll ends when skapi reports the request finished, and resolves with the destination's answer even when that answer has a `status` of its own, such as `'pending'` from an API that starts a job.
+- If `onResponse` or `onError` throws, the error is printed to the console and the poll still settles, so the queue behind it keeps moving.
 - `secretName` is optional. When you name one, `$CLIENT_SECRET` is substituted server side in the `url` and in the values of `headers`, `data` and `params` at any depth, and the key's access group authorizes the caller. Nothing is substituted inside a `multipart` body. When `$CLIENT_SECRET` appears nowhere, the SDK leaves `secretName` out and sends the request as written. When you name none, nothing is substituted and no placeholder is required.
 - When the named key has **Destinations** set and `url` does not match one of them, the request is refused with `INVALID_REQUEST` and `Destination is not allowed for this client secret.`, and nothing is sent. A matching request is sent with redirects turned off. A queued request is checked again right before it is sent. See [Restricting Where a Key Can Be Sent](/api-bridge/client-secret-request.md#restricting-where-a-key-can-be-sent).
 - `multipart: true` is refused together with `data`, and refused with no form in the first argument, both with `INVALID_PARAMETER`. The encoded body is capped at **2 MB minus 64 KB (2,031,616 characters)**, which is roughly a 1.5 MB file, because a raw body rides the ordinary request and shares its payload budget. Upload anything larger first and send its url.
@@ -174,6 +176,9 @@ the read is registered under the same key a poll is, so
 [stopForwardRequestPolling](#stopforwardrequestpolling) reaches it too. A stopped read resolves with
 `{ id, status: 'stopped' }` and does not call `onResponse`.
 
+If `onResponse` or `onError` throws, the error is printed to the console and the read still resolves
+(or rejects with the read's own error), so a throwing callback never fails a successful read.
+
 See [Streaming Request](/api-bridge/streaming-request.html)
 
 ## forwardRequestFinalize
@@ -274,6 +279,10 @@ cancelForwardRequest(
 Cancels the **request**. To stop watching one without cancelling it, use
 [stopForwardRequestPolling](#stopforwardrequestpolling).
 
+With `queue`, a poll for that request that is still waiting its turn in the client-side queue ends
+right away and resolves with `{ id, status: 'stopped' }`, the same as a stopped poll. Only that request's
+own queued job is removed: the other requests in the queue keep their place.
+
 ## stopForwardRequestPolling
 
 ```ts
@@ -327,28 +336,3 @@ forwardRequestQueueCount(
     in_queue: number;   // Number of requests currently waiting in the queue.
 }>
 ```
-
-## secureRequest
-
-```ts
-secureRequest<
-    Params = {
-        url: string;   // The URL of your custom API.
-        data?: any;    // The data to send to your custom API.
-        sync?: boolean; // When true, the requests are processed synchronously.
-    },
-    Response = { response: any; statusCode: number; url: string }
->(
-    params: Params[] | Form<Params>, // A single request, an array of requests, or a form.
-    url?: string
-): Promise<Response | Response[]>
-```
-
-Mirrors a `POST` request to your own API through Skapi, so your API receives the signed-in
-user's information alongside the request data. The user must be logged in, and this method
-does not accept HTML forms.
-
-When a secret key is set on the project's settings page, the mirrored request carries that
-key, which is how your API can verify the call really came from Skapi.
-
-See [Secure Post Request](/api-bridge/secure-post-request.md)

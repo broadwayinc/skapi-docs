@@ -95,7 +95,9 @@ When a user has turned on two-step login with an authenticator app, [`login()`](
 
 By default, once user login to your website, their login session is maintained until they logout.
 
-The session is kept up by the SDK: the sign-in token is refreshed in the background when it nears its end, and a refresh that gets no answer because the network is down leaves the session as it is, so a user whose connection drops for a while is still signed in when it returns (the request that needed the token fails with the code `NETWORK_ERROR`, as any request does without network, and the next one refreshes again). The session ends only when the user logs out or the server answers a refresh with a rejection: an expired or revoked refresh token, or a deleted account.
+The session is kept up by the SDK: the sign-in token is refreshed in the background when it nears its end, and a refresh that gets no answer because the network is down leaves the session as it is, so a user whose connection drops for a while is still signed in when it returns (the request that needed the token fails with the code `NETWORK_ERROR`, as any request does without network, and the next one refreshes again). The session ends only when the user logs out or the server answers a refresh with a rejection: an expired or revoked refresh token, or a deleted account. A page that loads while the network is down and the stored token has already expired starts with no user (`onLogin` receives `null`), and the session is back on the next page load with network.
+
+When several requests need a fresh token at the same moment, the SDK refreshes it once and they all wait for that one refresh. When the stored token has already expired as the page loads, it is refreshed once, not twice.
 
 To ensure that users' sessions are destroyed when they leave your website, you can set options.autoLogin to false in the third argument when initializing Skapi.
 
@@ -112,6 +114,8 @@ const skapi = new Skapi("<Project ID>", options);
 
 The [`logout()`](/api-reference/authentication/README.md#logout) method logs the user out from the project.
 On an anonymous session (see [Anonymous Login](/authentication/anonymous-login.md)) it also deletes the temporary account at once.
+
+**A logout always wins over a token refresh that is still running.** If the user logs out while the SDK is refreshing the sign-in token in the background, the refresh does not sign them back in. A request that was still waiting for that token ends with the error `User login is required.` (code `INVALID_REQUEST`).
 
 :::code-group
 
@@ -133,6 +137,8 @@ skapi.logout().then((res) => {
 ## Global Logout
 
 You can let the users logout and invalidate all tokens across all the users devices by setting `params.global` to `true`.
+
+If the other devices cannot be signed out (for example the network is down), the user is still logged out on this device, and `logout()` rejects with the error so you can tell the user that the other devices may still be signed in.
 
 :::code-group
 
@@ -190,3 +196,5 @@ skapi.onLogin = (profile) => {
 ```
 
 This handler is useful for updating the UI when the user logs in, logs out.
+
+If your `onLogin` callback throws, the error is printed to the console. It does not stop the other listeners, and it does not stop the login, logout or token refresh that called it.

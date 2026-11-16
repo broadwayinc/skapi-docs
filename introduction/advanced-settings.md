@@ -14,9 +14,8 @@ class Skapi {
         requestBatchSize?: number;  // Default: 50. Maximum number of requests processed per batch.
         encryption?: boolean | { // Default: false. Encrypts private record data in the browser. Can only be set during initialization. HTTPS is required.
             iterations?: number;             // Default: 600000. PBKDF2 cost. Minimum: 100000.
-            minPasswordLength?: number;      // Default: 0 (off). Rejects passwords shorter than this value.
             persistDevice?: boolean;         // Default: true. Keeps encryption unlocked across page reloads on that device.
-            recovery?: 'code' | 'none';      // Default: 'code'. Issues a one-time recovery code.
+            recovery?: 'code' | 'none';      // Default: 'code'. Issues an encryption recovery code, shown once in getConnectionInfo().
             trustPolicy?: 'tofu' | 'strict'; // Default: 'tofu'. Controls how a recipient's public key is trusted when sharing.
             withheld?: 'null' | 'sentinel';  // Default: 'null'. Specifies what `data` contains when a record cannot be decrypted.
             table?: string;                  // Default: '__skapi__keyring'. Reserved table for the user's keyring.
@@ -48,13 +47,13 @@ Options overview:
 
 - `encryption` (boolean | object, default: false)
     - Encrypts the `data` of records saved with `access_group: 'private'` in the browser before the data reaches the database. The contents of files attached to those records are encrypted as well.
+    - Encryption is only as strong as the user's password, so when it is on, encourage your users to use longer passwords.
     - **This option takes effect only when it is set during `Skapi` initialization.** There is no method for enabling encryption later. If this option is omitted, the instance saves every record's `data` as plain text for its entire lifetime.
     - Enabling encryption later does not encrypt records that were already saved as plain text.
     - Setting it to `true` uses the default settings. Pass an object to customize them:
         - `iterations` (number, default: 600000): PBKDF2 cost for deriving the key from the user's password. Minimum: 100000.
-        - `minPasswordLength` (number, default: 0, off): rejects passwords shorter than this value. Because encryption strength is limited by the user's password, setting a minimum is recommended.
         - `persistDevice` (boolean, default: true): keeps encryption unlocked across page reloads on that device.
-        - `recovery` ('code' | 'none', default: 'code'): issues a one-time recovery code. This is the only way to regain access to the data after a password reset.
+        - `recovery` ('code' | 'none', default: 'code'): issues an encryption recovery code when encryption is first set up for a user. It is shown once, in [`getConnectionInfo()`](/api-reference/connection/README.md#getconnectioninfo) as `encryption_recovery.code`, and `regenerateEncryptionRecoveryCode()` issues a new one. When a user forgets their password and resets it, this code is the only way to read their encrypted private records again. See [Encryption recovery codes](/database/encryption.md#encryption-recovery-codes).
         - `trustPolicy` ('tofu' | 'strict', default: 'tofu'): controls how a recipient's public key is trusted when a record is shared. `'strict'` requires the key to be pinned before the first share.
         - `withheld` ('null' | 'sentinel', default: 'null'): specifies what `data` contains when a record cannot be decrypted. `'sentinel'` returns a placeholder object with the reason instead of `null`.
         - `table` (string, default: '__skapi__keyring'): the reserved table for the user's keyring.

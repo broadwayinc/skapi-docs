@@ -223,6 +223,8 @@ Alternatively, you can call the standalone [`skapi.getFile()`](/api-reference/da
 If the file has private access restriction, you must use the `endpoint` type to get the file endpoint URL.
 The endpoint URL will be a signed URL that can expire after a certain amount of time.
 
+**Access is checked on every request through a signed file link.** For a file on a subscription record, the server checks that the user still has subscription access; for a file on a private record, that the user still has access to the record. A link handed out earlier stops working for a user who has since lost that access. A copy the browser already downloaded stays in its own cache (see [Caching Expiring Files](#caching-expiring-files)).
+
 If the file is an image or a video, you can use the url on img tag or video tag to display the file.
 
 :::warning Encrypted files are different
@@ -410,6 +412,12 @@ skapi.deleteFiles({ endpoints: [fileToDelete.url] }).then(records => {
     console.log(records); // updated records
 });
 ```
+
+Anything after a `?` in a URL is ignored, so the `url` of a file that is not public, which ends with `?t=` and a sign-in token, deletes that file.
+
+**A file's `url` deletes it whatever its name is.** Names with spaces or non-English characters work, with or without the `?t=` token, and the same goes for URLs passed to `remove_bin`. The SDK sends the address the file is stored under.
+
+There is one case the SDK cannot tell apart. A file whose name itself contains an encoded sequence, such as `a%20b.pdf`, is read as `a b.pdf` when you delete it with a saved `?t=` URL that the SDK did not hand out in the current session (for example a URL you stored before a page reload), and nothing is deleted. For such a file, read the record again and use the `url` it returns, or pass the [BinaryFile](/api-reference/data-types/README.md#binaryfile) object itself to `remove_bin`.
 
 The whole list is checked before anything is deleted, so if any file in it is refused, no file is deleted.
 
