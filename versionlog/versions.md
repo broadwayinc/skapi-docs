@@ -1,6 +1,11 @@
 # Version History
 
-### Current version: 2.3.0
+### Current version: 2.3.1
+
+**2.3.1**
+
+- **Streaming with `realtime: true`: the request's room is now left when the read ends.** When the read used a realtime connection your application had opened (or one that reconnected during the request), the connection stayed in the request's room after the response finished, instead of leaving it as [documented](/api-bridge/streaming-request.md#what-it-does-to-your-own-websocket). It now leaves the room, and only if the connection is still in that room: a room your application joined during the request is kept. A connection the SDK opened for the read was always closed, and that is unchanged.
+- **Sign-in no longer stays pending when the session cannot be read.** If the password was accepted but the session could not be read back right after (for example, the account belongs to another project, or the session could not be saved or refreshed), [`login()`](/api-reference/authentication/README.md#login), [`openIdLogin()`](/api-reference/authentication/README.md#openidlogin) and [`anonymousLogin()`](/api-reference/authentication/README.md#anonymouslogin) never resolved or rejected, and on Node.js the process could stop with an unhandled rejection. They now reject with the error from reading the session (such as `INVALID_REQUEST` "Invalid session."), or with `INVALID_REQUEST` "Current session does not exist." when no session was saved. A successful sign-in is unchanged.
 
 **2.3.0**
 
