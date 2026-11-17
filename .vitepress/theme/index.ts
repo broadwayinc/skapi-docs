@@ -4,6 +4,7 @@ import { defineComponent, h, watchEffect } from 'vue'
 import type { Theme } from 'vitepress'
 import AgentPromptDownloads from './AgentPromptDownloads.vue'
 import FullExampleDemo from './FullExampleDemo.vue'
+import OtherLanguages from './OtherLanguages.vue'
 import './custom.css'
 
 /**
@@ -54,7 +55,8 @@ const Layout = defineComponent({
     const { page } = useData()
     // Runs after VitePress's own head update for the same route change, which was set up first.
     if (inBrowser) watchEffect(() => markNotFound(!!page.value.isNotFound))
-    return () => h(DefaultTheme.Layout, null, slots)
+    // home-features-after only renders on the home page: links to the other languages' docs.
+    return () => h(DefaultTheme.Layout, null, { ...slots, 'home-features-after': () => h(OtherLanguages, { current: 'js' }) })
   },
 })
 

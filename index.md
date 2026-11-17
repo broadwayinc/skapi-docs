@@ -19,7 +19,7 @@ hero:
 
 features:
   - title: Works with Any Framework
-    icon: 🌐
+    icon: '<span class="feature-logos"><span><img src="/lang/html.svg" alt="HTML logo" width="28" height="28"></span><span><img src="/lang/javascript.svg" alt="JavaScript logo" width="28" height="28"></span><span><img src="/lang/typescript.svg" alt="TypeScript logo" width="28" height="28"></span></span>'
     details: Build with plain HTML, any JavaScript framework, or Node.js. No complex setup or server deployment required.
     link: https://www.npmjs.com/package/skapi-js
   - title: Build with your AI Agents

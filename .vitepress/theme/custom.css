@@ -6,3 +6,41 @@
 .vp-doc img[src^="/screenshots/"] {
   border: 1px solid var(--vp-c-border);
 }
+
+/**
+ * Home page "Works with Any Framework" card: its icon is three logos (index.md), each in
+ * its own box like a single feature icon. The feature's icon box is 48px wide and centres
+ * what is in it, so the row is pinned to the box's left edge instead: the first logo box
+ * sits exactly over the icon box and the other two follow to the right.
+ */
+.VPFeature .icon {
+  position: relative;
+}
+
+.feature-logos {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.feature-logos > span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  background-color: var(--vp-c-default-soft);
+  width: 48px;
+  height: 48px;
+}
+
+/* The icon box under it already has this (semi-transparent) colour; a second layer would darken it. */
+.feature-logos > span:first-child {
+  background-color: transparent;
+}
+
+.feature-logos img {
+  width: 28px;
+  height: 28px;
+}
