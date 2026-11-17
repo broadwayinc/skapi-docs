@@ -20,7 +20,7 @@ hero:
 features:
   - title: Works with Any Framework
     icon: 🌐
-    details: Build with plain HTML, any JavaScript framework, Node.js, or Python. No complex setup or server deployment required.
+    details: Build with plain HTML, any JavaScript framework, or Node.js. No complex setup or server deployment required.
     link: https://www.npmjs.com/package/skapi-js
   - title: Build with your AI Agents
     icon: 🤖
