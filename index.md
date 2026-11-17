@@ -8,10 +8,10 @@ hero:
   
   actions:
     - theme: brand
-      text: Getting Started
+      text: Read Docs
       link: /introduction/getting-started
     - theme: alt
-      text: Visit Skapi.com
+      text: skapi.com
       link: https://www.skapi.com
   image:
     src: /skapi-icon-cut-low.png
@@ -25,10 +25,10 @@ features:
   - title: Build with your AI Agents
     icon: 🤖
     details: Let your AI agent build your backend with Skapi. Spend less time on infrastructure and more time building your application.
-    link: /introduction/getting-started.html#building-with-your-ai-agent
+    link: https://mcp.broadwayinc.computer/
   - icon: ⚡
     title: High Performance. Lower Costs.
     details: A fully serverless architecture that scales with your application while keeping operating costs low.
-    link: /introduction/what-is-skapi
+    link: https://www.skapi.com
 
 ---
