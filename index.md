@@ -21,7 +21,7 @@ features:
   - title: Works with Any Framework
     icon: 🌐
     details: Build with plain HTML, any JavaScript framework, Node.js, or Python. No complex setup or server deployment required.
-    link: /introduction/getting-started.html#setting-up-your-codebase
+    link: https://www.npmjs.com/package/skapi-js
   - title: Build with your AI Agents
     icon: 🤖
     details: Let your AI agent build your backend with Skapi. Spend less time on infrastructure and more time building your application.
