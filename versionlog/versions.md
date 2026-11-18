@@ -1,6 +1,12 @@
 # Version History
 
-### Current version: 2.4.0
+### Current version: 2.4.3
+
+**2.4.3**
+
+Fixes and changes:
+
+- **Signed-out reads no longer sign out.** Every `getRecords()`, `getNewsletters()` or admin call made with no user signed in ran a logout first. The page's paging state was wiped each time, so `getRecords(query, { fetchMore: true })` always answered with page 1 for a signed-out visitor, and `onLogin` and `onUserUpdate` received `null` once per read. `fetchMore` now moves to the next page and stops at the end of the list, and the listeners fire only on page load, login, logout and session expiry, as documented in [Advanced Settings](/introduction/advanced-settings.md).
 
 **2.4.0**
 
