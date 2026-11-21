@@ -63,7 +63,7 @@ The first argument is the request body, a form or a plain object. This request s
 - `params`: Query parameters as key-value pairs, merged over the first argument (used when `method` is `GET`, `DELETE` or `HEAD`).
 - `multipart`: Relay the form's own bytes, files included, instead of flattening it to fields.
 - `skapiHeaders`: Tell the destination who is calling, from the verified identity of the request.
-- `poll`: Polling interval in milliseconds. See [Polling for the Result](#polling-for-the-result) below. Must be a non-negative number.
+- `poll`: Polling interval in milliseconds. See [Polling for the Result](#polling-for-the-result) below. `0` does not poll; any other value must be `1000` or more.
 - `expires`: Expiration time in seconds for the request record. After this period the record is removed and any poll returns an error.
 - `queue`: Optional queue name. Requests sharing the same `url`, `method`, and `queue` value are processed sequentially on the server side. Useful for rate-limited APIs or operations that must not run in parallel. When omitted, requests are processed in parallel.
 - `onResponse`: Callback called with the final API response. For non-queued requests it is called immediately alongside the returned promise. For queued requests it is called when polling resolves.
@@ -144,7 +144,7 @@ Add destinations to every key that can reach a paid or private API. It costs not
 
 Some third-party APIs are slow, or must be rate-limited so requests do not run in parallel. For these, run the request through a **queue** and **poll** for the result instead of waiting on a single response.
 
-- Set `poll` to a polling interval in milliseconds (a non-negative number). When `poll > 0`, the request is queued, the promise resolves immediately with a status object (`id`, `status`, `queue_name`, `in_queue`), and the final result is delivered to your `onResponse` (or `onError`) callback once it is ready.
+- Set `poll` to a polling interval in milliseconds (`1000` or more). When `poll > 0`, the request is queued, the promise resolves immediately with a status object (`id`, `status`, `queue_name`, `in_queue`), and the final result is delivered to your `onResponse` (or `onError`) callback once it is ready.
 - When `poll` is `0` or omitted, the returned status object also carries a `poll()` method you can call to start polling manually.
 - Add a `queue` name so requests sharing the same `url`, `method`, and `queue` are processed one at a time on the server.
 

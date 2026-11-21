@@ -263,7 +263,7 @@ type ForwardRequestStreamOptions = {
      *  holds part of a turn does not receive it twice. Default 0. */
     since?: number;
     /** Polling interval in milliseconds while the request is still running. Default 1000.
-     *  Must be a finite, non-negative number. */
+     *  Must be 1000 or more: a shorter interval is refused with INVALID_PARAMETER. */
     poll?: number;
     /** Called once with whatever the read resolves with. Not called when the read is stopped.
      *  `meta` carries facts about the REQUEST rather than the response: a settled poll resolves
@@ -440,7 +440,7 @@ type FileUploadError = {
 }
 ```
 
-`error.code` is the storage code (`AccessDenied`, `EntityTooLarge` ...), or `NETWORK_ERROR`, `TIMEOUT` (the upload took longer than the `timeout` given), `ABORTED` (the progress callback's `abort()` was called), `TOO_MANY_REQUESTS`, or `UPLOAD_FAILED` when storage gave no code. `error.cause` holds the raw response or rejection, when there was one.
+`error.code` is the storage code (`AccessDenied`, `EntityTooLarge` ...), or `NETWORK_ERROR`, `TIMEOUT` (the upload stopped moving: nothing sent for `timeout` milliseconds, 60 seconds by default), `ABORTED` (the progress callback's `abort()` was called), `TOO_MANY_REQUESTS`, or `UPLOAD_FAILED` when storage gave no code. `error.cause` holds the raw response or rejection, when there was one.
 
 ## RealtimeCallback
 
@@ -555,7 +555,7 @@ type RequestHistory = {
         onResponse?: (res:any, meta?: { executed?: number })=>void; // called when the request settles. `meta` carries request-level facts, which cannot ride on `res`: a settled poll resolves with the DESTINATION's own answer. `meta.executed` is when the worker BEGAN running this request, in milliseconds, matching the `executed` on a RequestHistory item -- `updated - executed` is the call, `updated - created` is the call plus the queue wait. A poll built from a forwardRequestHistory() item starts out already knowing it, taken from that listing, so it is delivered even when the request settles on the poll's first read; otherwise it is learned from a running tick, and a request that began and ended between two ticks has none. Optional either way: show nothing rather than falling back to `created`.
         onError?: (err:any)=>void;
         onStream?: (chunk: string, seq: number, via?: 'socket' | 'poll')=>void; // reads a STREAMED item's text as it arrives, same as on the dispatch path. "via" names the transport that carried the piece: 'socket' when skapi's websocket got there first, 'poll' when the poll did. Supplying it is what makes the poll fetch chunks. An item that already settled has nothing left to poll: read that one back with forwardRequestStream().
-    }) => Promise<any>; // function to poll the request status until it settles. The promise resolves with the final result of the request: the third-party API response body when it resolves, or the error payload when it fails. It does not resolve with a RequestHistory item, so "created" and "updated" are not on the polled value. A poll stopped by stopForwardRequestPolling() resolves with { id, status: 'stopped' }. Optional argument "latency" can be used to set the latency of the polling in milliseconds. Default latency is 1000ms. A STREAMED request has no body to resolve with until it is finalized, so it resolves with a StreamPollResult instead: the text arrived through onStream.
+    }) => Promise<any>; // function to poll the request status until it settles. The promise resolves with the final result of the request: the third-party API response body when it resolves, or the error payload when it fails. It does not resolve with a RequestHistory item, so "created" and "updated" are not on the polled value. A poll stopped by stopForwardRequestPolling() resolves with { id, status: 'stopped' }. Optional argument "latency" can be used to set the latency of the polling in milliseconds: 1000 or more (a shorter one is refused with INVALID_PARAMETER). Default latency is 1000ms. A STREAMED request has no body to resolve with until it is finalized, so it resolves with a StreamPollResult instead: the text arrived through onStream.
 }
 ```
 

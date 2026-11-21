@@ -5,7 +5,7 @@ Because third-party APIs can take time to respond, `forwardRequest()` uses a que
 
 ## Automatic polling with `poll`
 
-Pass a `poll` interval (in milliseconds) together with `onResponse` and `onError` callbacks. With `poll` greater than `0`, Skapi auto-generates a queue and starts polling automatically; the final result is delivered to `onResponse` once (and errors to `onError`), and the returned promise resolves with that same final result. The status object with a `poll()` method (`{ id, status, ... }`) is returned only when `poll` is omitted or `0`; in that case an `onResponse` you pass is called right away with that status object.
+Pass a `poll` interval (in milliseconds, `1000` or more) together with `onResponse` and `onError` callbacks. With `poll` greater than `0`, Skapi auto-generates a queue and starts polling automatically; the final result is delivered to `onResponse` once (and errors to `onError`), and the returned promise resolves with that same final result. The status object with a `poll()` method (`{ id, status, ... }`) is returned only when `poll` is omitted or `0`; in that case an `onResponse` you pass is called right away with that status object.
 
 ```js
 skapi.forwardRequest({ model: 'gpt-image-1.5', prompt: 'A cute baby sea otter', n: 1, size: '1024x1024' }, {
@@ -52,7 +52,7 @@ catch (err) {
 }
 ```
 
-This `poll()` takes `latency` (and `onStream` for a [streamed request](/api-bridge/streaming-request.md)). It resolves with the final result and rejects with the error, so read the outcome from the promise. The `poll()` on a [`forwardRequestHistory()`](/api-bridge/request-history.md) item also takes `onResponse` and `onError`, as shown below.
+This `poll()` takes `latency`, the interval in milliseconds (`1000` or more, default `1000`), and `onStream` for a [streamed request](/api-bridge/streaming-request.md). It resolves with the final result and rejects with the error, so read the outcome from the promise. The `poll()` on a [`forwardRequestHistory()`](/api-bridge/request-history.md) item also takes `onResponse` and `onError`, as shown below.
 
 If your `onResponse` or `onError` throws, the error is printed to the console and the poll still settles as usual, so the next poll on the same queue is not held up.
 

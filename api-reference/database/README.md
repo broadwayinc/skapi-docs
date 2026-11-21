@@ -426,7 +426,7 @@ See [DatabaseResponse](/api-reference/data-types/README.md#databaseresponse)
 See [Table](/api-reference/data-types/README.md#table)
 
 
-## getIndex
+## getIndexes
 
 ```ts
 getIndexes(
@@ -674,7 +674,7 @@ uploadFiles(
         record_id: string;
         /** Callback for upload progress. */
         progress?: ProgressCallback;
-        /** Milliseconds one file's upload may take. A file that takes longer is aborted and counted as failed with the code 'TIMEOUT'; the next file is then uploaded. Every file gets the full time. Omitted or 0: no limit. */
+        /** Milliseconds one file's upload may go with nothing moving before it is aborted and counted as failed with the code 'TIMEOUT'; the next file is then uploaded. A slow upload that keeps moving is never cut off. Default 60000. 0: no limit. */
         timeout?: number;
         /** Reject at the first file storage does not accept, with that file's error (see FileUploadError), instead of resolving with it listed in `failed` and `errors`. The files stored before it stay stored. Default false. */
         throwOnFileError?: boolean;

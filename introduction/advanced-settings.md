@@ -11,7 +11,7 @@ class Skapi {
     options?: {
         autoLogin?: boolean;        // Default: true
         refetchServiceInfo?: boolean;// Default: false. Bypasses cached project information and fetches fresh information on every load.
-        requestBatchSize?: number;  // Default: 50. Maximum number of requests processed per batch.
+        requestBatchSize?: number;  // Default: 50. Maximum number of requests running at once.
         encryption?: boolean | { // Default: false. Encrypts private record data in the browser. Can only be set during initialization. HTTPS is required.
             iterations?: number;             // Default: 600000. PBKDF2 cost. Minimum: 100000.
             persistDevice?: boolean;         // Default: true. Keeps encryption unlocked across page reloads on that device.
@@ -24,9 +24,9 @@ class Skapi {
             onLogin?: (user: UserProfile | null) => void; // Fires on initial page load (after Skapi initializes), on login/logout, and when a session expires. The callback receives a UserProfile object if the user is logged in; otherwise, it receives null.
             onUserUpdate?: (user: UserProfile | null) => void; // Fires on initial page load (after Skapi initializes), on login/logout, when a session expires, and when the user's profile is updated. The callback receives a UserProfile object if the user is logged in; otherwise, it receives null.
             onBatchProcess?: (process: {
-                batchToProcess: number; // Number of batches remaining
-                itemsToProcess: number; // Number of items remaining
-                completed: any[]; // Results completed in this batch
+                batchToProcess: number; // Requests still waiting, divided by requestBatchSize, rounded up
+                itemsToProcess: number; // Requests still waiting
+                completed: any[]; // Results completed since the last report
             }) => void;
         }
     }) {
@@ -43,7 +43,7 @@ Options overview:
     - See: [Auto Login](/authentication/login-logout.html#auto-login)
 
 - `requestBatchSize` (number, default: 50)
-    - Maximum number of requests processed in each batch.
+    - Maximum number of requests running at once. A waiting request starts as soon as a running one finishes.
 
 - `encryption` (boolean | object, default: false)
     - Encrypts the `data` of records saved with `access_group: 'private'` in the browser before the data reaches the database. The contents of files attached to those records are encrypted as well.
@@ -69,6 +69,6 @@ Options overview:
         - See: [Listening to User Profile Updates](/authentication/user-info.html#listening-to-user-s-profile-updates)
 
     - `onBatchProcess(process)`
-        - Fires each time Skapi finishes processing a request batch.
+        - Fires every `requestBatchSize` finished requests, and whenever no requests are left running or waiting.
 
 Type reference: See [UserProfile](/api-reference/data-types/README.md#userprofile).

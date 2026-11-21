@@ -144,7 +144,7 @@ clientSecretRequest(
         headers?: { [key: string]: string }; // Request headers as a key-value object.
         data?: { [key: string]: any }; // Request body as a key-value object (used when method is POST or PUT).
         params?: { [key: string]: string }; // Query parameters as a key-value object (used when method is GET or DELETE).
-        poll?: number; // Optional polling interval in milliseconds. Must be a non-negative number.
+        poll?: number; // Optional polling interval in milliseconds. 0 does not poll; any other value must be 1000 or more.
         queue?: string; // Optional queue name. Requests sharing the same queue are processed sequentially on the server side.
         expires?: number; // Optional expiration time in seconds for the request record.
         stream?: boolean; // Read the destination's response INCREMENTALLY. Requires a queue, and mints one when you did not name one. Defaults to false.

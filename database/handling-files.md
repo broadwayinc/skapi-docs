@@ -132,14 +132,16 @@ With five files or more, the upload permits are requested 100 to a request inste
 
 A file whose upload keeps being answered with `429` and a `Retry-After` is retried up to 6 times and then counted as failed with the code `TOO_MANY_REQUESTS`; it is never retried without end.
 
-### Time limit per file
+### Stalled uploads
 
-By default a file's upload has no time limit: a connection that stalls holds the call for as long as the browser keeps it open. `timeout`, in milliseconds, ends that. A file that is not finished within the time is aborted and counted as failed with the code `TIMEOUT`, and the next file is uploaded. Every file gets the full time.
+A file whose upload stops moving is aborted and counted as failed with the code `TIMEOUT`, and the next file is uploaded. "Stops moving" means no bytes sent for 60 seconds, or no answer for 5 minutes after the whole file was sent. A slow upload that keeps moving is never cut off, however long it takes.
+
+`timeout` changes the 60 seconds (the wait after sending is always 5 times it), and `0` turns the limit off.
 
 ```js
 await skapi.uploadFiles(form, {
     record_id: "record_id_to_attach_to",
-    timeout: 120000, // two minutes per file
+    timeout: 120000, // abort a file after two minutes with nothing moving
 });
 ```
 

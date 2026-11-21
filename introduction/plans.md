@@ -14,6 +14,7 @@ The limits below are per project.
 | E-mail sends per month | 50 | 5,000 | 50,000 |
 | Newsletter subscribers | 50 | 5,000 | 50,000 |
 | Bandwidth per month | 10 GB | 100 GB | 400 GB |
+| API requests per month | 500,000 | 3,000,000 | 15,000,000 |
 | Queued ticket runs per month | 100 | 10,000 | 100,000 |
 | Ticket log retention | 30 days | 90 days | Kept |
 | Past a limit | Stop | Stop | Billed as overage |
@@ -27,11 +28,13 @@ File storage is one pooled figure covering your web hosting, your record file at
 
 Queued ticket runs are the runs of a ticket that go on after a Respond action answered the caller: at once, after a delay or at a time. A call that waited its turn in the line of a ticket with a Concurrency setting is one too. See [Queued ticket runs](#queued-ticket-runs).
 
+API requests are the calls your app makes to the Skapi API, signed in or signed out. Hosted pages and file downloads from the CDN are not API requests: they count toward bandwidth. See [API requests](#api-requests).
+
 A Trial project never expires and needs no card.
 
 ## Your plan and usage
 
-The **Plan & Usage** card on your project's `Settings` page at [skapi.com](https://www.skapi.com) shows the plan the project is on and how much of each metered limit it uses: user accounts, database storage, the pooled file storage split into hosting, cloud storage and file storage, this month's bandwidth, e-mail sends and queued ticket runs, and email storage. The note under a meter says how that limit is counted. The **Upgrade Plan** button opens the plan page of the project, and the line under it says what happens past a limit on the current plan.
+The **Plan & Usage** card on your project's `Settings` page at [skapi.com](https://www.skapi.com) shows the plan the project is on and how much of each metered limit it uses: user accounts, database storage, the pooled file storage split into hosting, cloud storage and file storage, this month's bandwidth, API requests, e-mail sends and queued ticket runs, and email storage. The note under a meter says how that limit is counted. The **Upgrade Plan** button opens the plan page of the project, and the line under it says what happens past a limit on the current plan.
 
 ![The Plan & Usage card on a project's Settings page: a Standard badge, one meter per metered limit with the usage against the limit, an Upgrade Plan button and the hard stop note](/screenshots/settings-plan.webp)
 
@@ -47,6 +50,7 @@ A request that needs more than the plan allows is refused, and everything else k
 - File uploads past the file storage limit are refused with `EXCEED_LIMIT: Project has exceeded file storage limit (hosting, files and BunnyQuery index share it). Consider upgrading your plan.` This covers record files, web hosting files and the BunnyQuery index, which share one pool.
 - Newsletter sends past the monthly limit are refused, and so are subscriptions past the subscriber limit. One newsletter costs one send per subscriber it goes to, so one send to a full Trial list of 50 subscribers uses all 50 monthly sends. A Trial project is also refused once its owner has used the 200 newsletter mails a month their Trial projects share. Invitation e-mails count as sends too, resends included, and are refused past the project's monthly limit; see [Inviting Users](/admin/invite.md).
 - Downloads and hosted pages past the monthly bandwidth allowance are refused until the next month; see [Bandwidth](#bandwidth).
+- API requests past the monthly API request limit are refused until the next month with `EXCEED_LIMIT: This project has used its 500,000 API requests for this month. Requests are refused until the month ends. Consider upgrading your plan.` (the number is the plan's own limit); see [API requests](#api-requests).
 - A Respond that would queue a ticket run past the month's figure fails with `QUOTA_EXCEEDED`; see [Queued ticket runs](#queued-ticket-runs).
 - Email storage is not refused: when it is full, the oldest newsletters are deleted to make room; see [Email storage](#email-storage).
 
@@ -55,11 +59,12 @@ A request that needs more than the plan allows is refused, and everything else k
 A project that reaches or goes past a plan limit is never suspended and never deleted for it.
 Its existing data keeps working: users can sign in, records and files can be read, and hosted pages are served (within the bandwidth allowance).
 Only the requests that need more than the plan allows are refused, with the errors above.
+The one limit that refuses reads too is the monthly API request limit: once it is used up, every API request of the project is refused until the month ends, reads included, while hosted pages and CDN file downloads are still served within the bandwidth allowance.
 A project can end up past a storage limit, for example after it moves to a smaller plan; it keeps running the same way, and writes that need more room are refused until it is back under the limit.
 
 The project owner gets an e-mail when a limit reaches 80% of the plan (a usage warning) and again when it reaches 100% (limit reached).
 Each e-mail names the limit and shows the usage against it. What happens at the limit is in a highlighted panel, amber for the warning and red once the limit is reached, and the main button opens the project's upgrade page, with a link to its dashboard below.
-This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth and monthly queued ticket runs, on Trial and Standard, one e-mail per limit.
+This covers user accounts, database storage, file storage, email storage, monthly e-mail sends, newsletter subscribers, monthly bandwidth, monthly API requests and monthly queued ticket runs, on Trial and Standard, one e-mail per limit.
 For email storage the e-mail says your oldest emails get deleted, because full email storage deletes the oldest newsletters instead of refusing anything.
 A monthly limit starts over with the month.
 
@@ -70,7 +75,7 @@ To make room, either reduce usage or upgrade:
 
 The project's pages at [skapi.com](https://www.skapi.com) show a red banner when a limit is reached and an amber one when a limit is at 80% or more.
 Each banner lists the limits with their figures, says what is refused, and links to where that data can be managed.
-The red banner covers database storage, file storage, user accounts, newsletter subscribers and monthly e-mail sends; the month's bandwidth and queued ticket runs get red banners of their own once used up.
+The red banner covers database storage, file storage, user accounts, newsletter subscribers and monthly e-mail sends; the month's bandwidth, API requests and queued ticket runs get red banners of their own once used up.
 Email storage has no banner, since nothing is refused when it is full.
 
 On Premium nothing is refused: usage past the plan is billed as overage, below.
@@ -89,6 +94,7 @@ Past an included limit the excess is metered and added to your next invoice, and
 | Newsletter subscribers | $1.00 per 1,000 subscribers-month |
 | Queued ticket runs | $1.00 per 1,000 |
 | Bandwidth | $0.12 per GB |
+| API requests | $6.00 per 1,000,000 |
 | Monthly active users | Free |
 
 Storage overage is time weighted rather than a high water mark, so a project that sits over a limit for two days pays for two days and not for the month.
@@ -100,6 +106,35 @@ A ticket's [Respond](/tickets/actions.md#resp-answer-the-caller) action answers 
 When the month's figure is reached, the project's pages at skapi.com show a banner saying so (on Premium, that the rest is billed as overage). On Trial and Standard a Respond that would queue a run past the month's figure fails with `QUOTA_EXCEEDED` at that action, and a call that would join a ticket's line past it is refused with the same code instead of waiting: the ticket's other actions, and every Respond that stops, keep working, and the count resets with the month. The **Plan & Usage** card of the project shows the month's queued runs against the plan, and the Tickets page says so when they are used up. See [Going on later](/tickets/actions.md#going-on-later-queued-runs).
 
 The log rows a ticket writes (its consumptions and their action rows) count toward the project's database storage, shown as their own part of the Database figure on Plan & Usage. They are kept 30 days on Trial, 90 days on Standard and for good on Premium, then expire on their own; deleting a ticket deletes its logs, and the owner can [clear a ticket's log](/tickets/errors.md#clearing-the-log) before a time at any moment.
+
+## API requests
+
+Every plan includes a monthly number of API requests, counted for the UTC month and reset at the start of the next one.
+An API request is one call your app makes to the Skapi API, such as `getRecords()`, `postRecord()` or `getProfile()`, from a signed-in user or a signed-out visitor alike.
+A method that sends more than one request counts each of them.
+Trial includes 500,000 a month, Standard 3,000,000 and Premium 15,000,000.
+The **Plan & Usage** card of the project shows the month's count against the plan.
+
+Not counted:
+
+- Hosted pages and file downloads served from the CDN. They count toward [bandwidth](#bandwidth).
+- What you do in the Skapi dashboard at [skapi.com](https://www.skapi.com).
+- Work Skapi runs in the background for the project, such as a ticket's queued runs, which have [their own monthly figure](#queued-ticket-runs).
+- Requests this limit refused.
+
+On Trial and Standard, once the month's figure is used up, every API request of the project is refused with:
+
+```
+EXCEED_LIMIT: This project has used its 500,000 API requests for this month. Requests are refused until the month ends. Consider upgrading your plan.
+```
+
+The number is the plan's own figure, so a Standard project reads 3,000,000. In the SDK the rejected error has `code` `EXCEED_LIMIT` and that sentence as its `message`.
+Refusals stop when the UTC month ends, or about a minute after the plan is upgraded.
+Requests are counted in small batches, so a project can go slightly past its figure before the refusals start.
+
+Premium is never refused: requests past its 15,000,000 are billed at $6.00 per 1,000,000.
+
+A page that sends the same request in a loop, or many requests at once for data it already has, uses up the month quickly. Read a long list page by page with `fetchMore`, and keep the results you already fetched instead of asking again.
 
 ## Bandwidth
 

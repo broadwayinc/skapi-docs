@@ -1,6 +1,15 @@
 # Version History
 
-### Current version: 2.4.3
+### Current version: 2.4.4
+
+**2.4.4**
+
+Fixes and changes:
+
+- **One stuck request no longer freezes the page's other requests.** Requests used to run in batches: nothing from the next batch started until every request of the current one had finished. So one request whose connection died (a laptop that went to sleep, a wifi change) held every later request on the page until it was reloaded. Now a waiting request starts as soon as any running one finishes. `requestBatchSize` is still the most requests running at once, and `onBatchProcess` still reports in the same shape. See [Advanced Settings](/introduction/advanced-settings.md).
+- **A request that stops moving fails instead of waiting forever.** When nothing has been sent or received for 60 seconds, the request rejects with `TIMEOUT`. A download that is still receiving data is never cut off.
+- **`uploadFiles()`: `timeout` is now how long a file may go with nothing moving, not its total time.** A total limit cut off large files on slow connections that were still uploading. A file is now aborted with `TIMEOUT` only after 60 seconds with no bytes sent (or 5 minutes with no answer after the whole file was sent); before, there was no limit unless you set one. `timeout` changes the 60 seconds and `0` turns it off. See [Stalled uploads](/database/handling-files.md#stalled-uploads).
+- **Polling intervals under 1 second are refused.** The `poll` option of `forwardRequest()` (and the deprecated `clientSecretRequest()`), the `latency` of a `poll()` handle, and the `poll` option of `forwardRequestStream()` now reject a value under `1000` milliseconds with `INVALID_PARAMETER`; before, any non-negative number was accepted, and `0` on a handle sent requests back to back. `poll: 0` on `forwardRequest()` still means "do not poll". See [Polling Requests](/api-bridge/polling-request.md).
 
 **2.4.3**
 

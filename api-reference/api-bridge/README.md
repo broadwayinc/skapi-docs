@@ -16,7 +16,7 @@ forwardRequest(
         params?: { [key: string]: string }; // Query parameters as a key-value object, and the merge target of the form for GET, DELETE and HEAD.
         multipart?: boolean; // Relay the form's own bytes, the way a browser would send them, files included, instead of flattening it to fields. Keep the encoded body under 2 MB minus 64 KB. Defaults to false.
         skapiHeaders?: boolean | { user?: boolean; service?: boolean }; // Which of "x-skapi-user" and "x-skapi-service" the destination is told. Both values are written server side from the VERIFIED identity of the request. Defaults to false.
-        poll?: number; // Optional polling interval in milliseconds. When > 0, polling starts automatically: onResponse is called once with the final result (errors go to onError), and the promise resolves with that final result. When omitted or 0, the status object is returned with a poll() method to start polling manually. Must be a non-negative number.
+        poll?: number; // Optional polling interval in milliseconds. When > 0, polling starts automatically: onResponse is called once with the final result (errors go to onError), and the promise resolves with that final result. When omitted or 0, the status object is returned with a poll() method to start polling manually. Any other value must be 1000 or more: a shorter interval is refused with INVALID_PARAMETER.
         queue?: string; // Optional queue name. Requests sharing the same queue are processed sequentially on the server side.
         expires?: number; // Optional expiration time in seconds for the request record.
         stream?: boolean; // Read the destination's response INCREMENTALLY and relay the raw bytes as they arrive, instead of downloading the whole body first. Requires a queue, and mints one when you did not name one. Never sent to the destination. Defaults to false. See Streaming below.
@@ -145,7 +145,7 @@ forwardRequestStream(
         onStream?: (chunk: string, seq: number, via?: 'socket' | 'poll') => void; // Called with each relayed piece, in order, with its sequence number and which transport carried it. Raw text, never parsed.
         realtimeGroup?: string; // The realtime_group the dispatching forwardRequest() handed back. With it, this read ALSO listens on skapi's websocket while the request is still running. Without it the read works exactly as before, at poll speed.
         since?: number; // Start after this sequence number instead of from the beginning, so a reader that already holds part of a response does not receive it twice. Default 0.
-        poll?: number; // Polling interval in milliseconds while the request is still running. Default 1000. Must be a finite, non-negative number.
+        poll?: number; // Polling interval in milliseconds while the request is still running. Default 1000, and must be 1000 or more: a shorter interval is refused with INVALID_PARAMETER.
         onResponse?: (res: any) => void; // Called once with whatever this resolves with.
         onError?: (err: any) => void; // Called if the read itself fails.
     }

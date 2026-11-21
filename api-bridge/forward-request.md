@@ -179,7 +179,7 @@ When a form carries an `action` attribute, the SDK stores the resolved value and
 
 | code | when |
 |---|---|
-| `INVALID_PARAMETER` | a bad `method`, `multipart` with `data`, `multipart` with no form, a header in the `x-skapi-` namespace, a multipart body over the size cap, a negative `poll` |
+| `INVALID_PARAMETER` | a bad `method`, `multipart` with `data`, `multipart` with no form, a header in the `x-skapi-` namespace, a multipart body over the size cap, a `poll` other than `0` that is under `1000` |
 | `INVALID_REQUEST` | an unknown `secretName`, no access to the named secret, a destination the secret is not allowed to be sent to, a `signal` that was already aborted |
 | `NOT_SUPPORTED` | `multipart: true` in an environment with no `FormData` or `Response` |
 
