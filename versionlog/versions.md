@@ -1,6 +1,12 @@
 # Version History
 
-### Current version: 2.4.4
+### Current version: 2.4.5
+
+**2.4.5**
+
+Fixes and changes:
+
+- **A streamed request with `realtime: true` settles as soon as its response ends.** While the websocket is delivering, the poll slows to one read every 5 seconds, so the last piece of text could be on screen for a few seconds before the request settled. The server now sends one more message to the room when the response ends, and the SDK reads the final status right away (if that read is a moment early, the next read at your `poll` interval settles it). This works for `forwardRequest()` (and the deprecated `clientSecretRequest()`) with `poll`, and for `forwardRequestStream()` with `realtimeGroup`. Older SDKs ignore the new message and settle on their next poll, as before. If your application opened its own realtime connection, its callback receives this message once per such request as a `type: 'message'` event with `code: 'CSR_END'`, the same way it already receives each piece with `code: 'CSR_CHUNK'`; ignore both by `code`. See [Faster delivery over the websocket](/api-bridge/streaming-request.md#faster-delivery-over-the-websocket).
 
 **2.4.4**
 

@@ -184,6 +184,7 @@ const res = await skapi.forwardRequest({ report: 'quarterly', stream: true }, {
 - No websocket in this environment, no session to open one with, a connection that will not open, a connection that drops mid-response: none of them are errors and none of them are reported. The read continues at poll speed, which is the behaviour with no websocket at all.
 - Nothing is delivered twice and nothing arrives out of order, whichever transport carried it. A piece the websocket delivers is skipped by the poll, and a piece that arrives ahead of one still missing is held until the gap is filled rather than handed over early.
 - Every piece is in the chunk store either way, so a response is re-readable in full with `forwardRequestStream()` regardless of how it was delivered live.
+- While the websocket is delivering, the poll slows to one read every 5 seconds (or your `poll`, if that is longer), because it only has to fill gaps. When the response ends, the server sends one more message to the room saying so, after the request's final status is saved, and the SDK reads that status right away instead of waiting for the next slow poll (if that read is a moment early and still finds the request running, the next read at your `poll` interval settles it). If that message never arrives (it is not guaranteed), the request settles on the next poll, at most about 5 seconds later.
 
 Because both transports hand their text to the same `onStream`, a response delivered perfectly over the websocket and one polled the whole way look identical from the outside. The third argument is the difference: `via` is `'socket'` when the websocket got there first, `'poll'` when the poll did. It is there to be observed, not acted on, and a callback that ignores it reads exactly as it did before.
 
@@ -200,7 +201,7 @@ onStream: (chunk, seq, via) => {
 
 Skapi's realtime connection is shared, and this borrows it:
 
-- A connection your application already opened is **not** replaced, its callback is not changed, and it is not closed. These pieces are read off the socket directly, so your own realtime callback never sees them.
+- A connection your application already opened is **not** replaced, its callback is not changed, and it is not closed. Your own realtime callback also receives these frames, as ordinary `type: 'message'` events: one with `code: 'CSR_CHUNK'` per piece, and one with `code: 'CSR_END'` when the response ends (from SDK 2.4.5 on). Ignore them by `code` if your callback renders every message.
 - A connection skapi opens for a read is closed by that read, and only while it is still the one skapi opened.
 - Joining a room **replaces** the room the connection was in, and the room is left when the read settles rather than restored, because the SDK cannot read which room you were in. If your application uses realtime rooms of its own, re-join yours after the request settles.
 - One connection is in one room at a time, so two responses streaming at once cannot both listen. The first takes the room and the second reads at poll speed rather than evicting a reader mid-response.
