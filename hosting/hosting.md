@@ -143,6 +143,7 @@ A folder is deleted with everything inside it, and a delete cannot be undone.
 :::info
 - Only the **project owner** can upload and delete hosted files. Admins of the project cannot, access group `99` included.
 - A file name cannot start with `#`: that character marks a folder in the file list, and the upload is refused.
+- The `__skapi__` folder at the root of your site is reserved for Skapi features such as [link previews](#link-previews), and an upload there is refused. A folder of that name inside another folder is yours.
 - Hosted files count toward your plan's [file storage](/introduction/plans.md), together with record files and cloud files. The **Storage in Use** row on the page shows how much your site takes.
 :::
 
@@ -168,6 +169,70 @@ Choosing it is a project setting, so only the **project owner's Skapi account** 
 :::danger
 If you are using an **SPA framework** such as Vue, React, or Angular, **YOU MUST** set your **`index.html`** as the 404 page, so every route of your app is answered by it.
 :::
+
+## Link previews
+
+When someone posts a link on Threads, X, Facebook, KakaoTalk, Slack or Discord, the site reads the page's Open Graph tags (`og:title`, `og:image`, ...) to show a preview card. It does not run the page's scripts. A single-page app sets its tags with JavaScript, so every link to it shows the same preview, whatever the link points to.
+
+Every hosted site answers one more address for this:
+
+```
+https://<name>.skapi.com/__skapi__/og/<record_id>
+```
+
+It answers with a page whose preview tags come from that record of your project, and sends a person who opens the link on to an address of your site. Share this address instead of your app's own one, and each link shows its own title, text and picture.
+
+### Making a record a link preview
+
+Post a record in the `public` access group with an `og` object inside `__skapi__` in its data, and attach the preview picture to the record:
+
+```js
+const record = await skapi.postRecord(
+    {
+        post: postId, // your own data, as usual
+        __skapi__: {
+            og: {
+                title: 'Sunset over the bay',                      // required
+                description: 'A photo by Ann on Aurora Photos.',
+                image: 'preview',                                  // the picture attached below
+                url: '/index.html#post=' + postId,                 // where a person is sent
+            },
+        },
+    },
+    { table: { name: 'share_cards', access_group: 'public' } },
+    [{ name: 'preview', file: previewImageFile }] // a 1200 x 630 PNG or JPEG reads well everywhere
+);
+
+const shareLink = `https://aurora.skapi.com/__skapi__/og/${record.record_id}`;
+```
+
+| Key of `__skapi__.og` | What it is |
+| --- | --- |
+| `title` | The preview's title, and the page title. **Required**: without it there is no preview, and a person is sent straight on. Up to 200 characters; longer text is cut. |
+| `description` | The text under the title. Up to 500 characters. |
+| `image` | The preview picture: the name of a file attached to this same record (`preview` above), or that file's url. It must be a `.png`, `.jpg`, `.jpeg`, `.gif` or `.webp` file. Any other file, or a picture of another record, gives a preview without a picture. |
+| `url` | Where a person who opens the link is sent: a path on your site, starting with `/`, such as `/index.html#post=42` or `/gallery?photo=42`. Anything else, such as another site's address, is replaced by `/`. Defaults to `/`. |
+
+The page also carries the matching `twitter:` tags, and `og:site_name` is your site's name.
+
+:::info Only what is inside `__skapi__` is read
+Skapi reads `data.__skapi__.og` and nothing else of the record's data, so the rest of the data stays your app's own, and a top-level `og` key of your own is never read. `__skapi__` is where Skapi features find their settings in record data; see [Creating a Record](/database/create.md#reserved-data-key-skapi).
+:::
+
+### What happens when the address is opened
+
+- **A crawler** (the site building the preview card) reads the tags of the page and shows the title, the text and the picture.
+- **A person** is sent on at once to `url`, with a script, so they land on your app: for example `https://aurora.skapi.com/index.html#post=42`. A browser without JavaScript shows the title as a link to it.
+- **When there is nothing to show**, the address sends the visitor to the root of your site (`/`): the record does not exist or is not in the `public` access group, its data has no `__skapi__.og`, or its project could not be reached. A shared link always leads somewhere.
+
+### Things to know
+
+- **Public records only.** The record is read without signing in, as any visitor could read it, so only the `public` access group works. Anything in its data, and the attached picture, can be read by anyone who has the address.
+- **Your CORS setting must allow your site.** The record is read on behalf of `https://<name>.skapi.com`. If your project's [CORS setting](/service-settings/service-settings.md) lists addresses, include your site's, or every link preview of it sends people to `/`.
+- **Records encrypted with [client-side encryption](/database/encryption.md)** cannot be read, and give no preview.
+- **Previews are kept by the sites that show them.** A site that has already built a preview card for an address may keep showing it after you change the record. Post a new record, and share its address, when a preview must change.
+- **Delete the record** to retire a preview: its address then sends people to `/`.
+- The address of a record works only on the site of the record's own project.
 
 ## The CDN cache
 
