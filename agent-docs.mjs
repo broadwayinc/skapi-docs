@@ -29,8 +29,7 @@
 //   - external urls, and everything inside code, are left exactly as written
 //
 // Heading ids are only written where a link needs one. There are ~650 headings and an id
-// costs tokens on every read, for an anchor nothing points at. The method entries of the API
-// reference always get one, because the method index links to each of them.
+// costs tokens on every read, for an anchor nothing points at.
 import fs from 'fs';
 import path from 'path';
 import all_files, { method_ref, full_examples, api_reference, version_history, deprecated } from './all_files.mjs';
@@ -39,7 +38,7 @@ import { PAGES, DEFAULT_DESCRIPTION, NOINDEX } from './.vitepress/seo-pages.mjs'
 
 const DOCS_ORIGIN = 'https://docs.skapi.com';
 /** The published skapi-js version every `skapi-js@latest` in a code example is written as. */
-const SKAPI_VERSION = await skapiVersion();
+const SKAPI_VERSION = await skapiVersion({ fresh: true });
 const OUT_DIR = './public';
 const PAGES_DIR = 'md';
 const PROMPT_FILE = 'SKAPI.md';
@@ -226,11 +225,6 @@ function loadPage(sitePath, report, text) {
 /** '#api-reference' in SYSTEM.md is the bundle's API reference section; see REFERENCE. */
 const REFERENCE = { title: api_reference[0].text, id: slugifyHeading(api_reference[0].text) };
 
-/** Every "## method" entry of a reference page gets an id in every output: the method index links to it. */
-function isMethodEntry(page, h) {
-    return page.key.startsWith('api-reference/') && h.level === 2;
-}
-
 /**
  * Rewrites every link of every page for an output holding exactly `pages`, then writes the ids
  * those links need. `mode` is 'bundle' (the pages follow each other in one file, a link to
@@ -244,7 +238,6 @@ function buildPages(pages, report, mode) {
         if (p.key) byKey[p.key.toLowerCase()] = p;
         p.out = p.lines.slice();
         p.wanted = new Set();
-        for (let h of p.headings) if (isMethodEntry(p, h)) p.wanted.add(h.slug);
     }
 
     // SYSTEM.md has no page id: its headings are the file's own, so their slug is their id.
@@ -395,10 +388,12 @@ function documentationMap(pages, mode) {
 
 /**
  * The index SYSTEM.md carries in place of <!-- METHOD_INDEX -->: every "## method" of the
- * reference pages, grouped by page, each linking to its entry. Names only: the reference entries
+ * reference pages, grouped by page, with ONE link per page. Names only: the reference entries
  * open with a signature, not a summary, and the names say what they do. The agent learns what
- * exists and where it is documented without carrying the bodies; rule 2 sends it to the entry
- * before it writes the call. The data types are listed by name with one link to their page.
+ * exists and which page documents it without carrying the bodies; rule 2 sends it to the page
+ * before it writes the call. A link per method would repeat the page's url ~110 times (12 KB of
+ * a 27 KB prompt in 2026-11) for a fragment a fetch ignores: the whole page comes back anyway.
+ * Types (the Data Types page, and a capitalised entry on any page) are listed without "()".
  */
 function methodIndex(pages, mode) {
     let out = [];
@@ -408,14 +403,11 @@ function methodIndex(pages, mode) {
         let entries = page.headings.filter((h) => h.level === 2);
         if (!entries.length) continue;
         let pageHref = mode === 'bundle' ? `#${page.id}` : pageUrl(page.key);
-        let entryHref = (h) => (mode === 'bundle' ? '' : pageUrl(page.key)) + `#${page.id}-${h.slug}`;
         let isTypes = page.key.endsWith('data-types');
-        out.push(`### ${isTypes ? 'Data Types' : item.text} ([page](${pageHref}))`);
-        if (isTypes) {
-            out.push(entries.map((h) => `\`${h.text}\``).join(', '));
-            continue;
-        }
-        out.push(entries.map((h) => `[${h.text}()](${entryHref(h)})`).join(', '));
+        out.push(`### [${isTypes ? 'Data Types' : item.text}](${pageHref})`);
+        // A reference page may also define its own types (tickets: TicketCondition ...): a
+        // capitalised entry is a type, not a call.
+        out.push(entries.map((h) => (isTypes || /^[A-Z]/.test(h.text) ? h.text : `${h.text}()`)).join(', '));
     }
     return out.join('\n');
 }

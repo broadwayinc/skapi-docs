@@ -25,7 +25,7 @@ features:
   - title: Build with your AI Agents
     icon: 🤖
     details: Let your AI agent build your backend with Skapi. Spend less time on infrastructure and more time building your application.
-    link: https://mcp.broadwayinc.computer/
+    link: https://mcp.skapi.com/
   - icon: ⚡
     title: High Performance. Lower Costs.
     details: A fully serverless architecture that scales with your application while keeping operating costs low.

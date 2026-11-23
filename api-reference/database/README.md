@@ -449,7 +449,7 @@ getIndexes(
 ```
 
 `table` is **required**, so there is no no-argument form.
-[`getIndexes()`](/api-reference/database/README.md#getindex) has no top level `condition` either.
+[`getIndexes()`](/api-reference/database/README.md#getindexes) has no top level `condition` either.
 The only condition is `order.condition`, and it **requires** `order.value`: a query that sets `order.condition` without `order.value` is rejected.
 
 | Call | Result |

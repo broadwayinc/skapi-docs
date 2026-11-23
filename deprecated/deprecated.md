@@ -538,6 +538,6 @@ An older SDK reading an [encrypted record](/database/encryption.md) sees the raw
 
 ### Require Login and the metadata listings
 
-[`getTables()`](/api-reference/database/README.md#gettables), [`getTags()`](/api-reference/database/README.md#gettags), [`getIndexes()`](/api-reference/database/README.md#getindex) and [`getUniqueId()`](/api-reference/database/README.md#getuniqueid) used to be served to anyone who knew the project ID. With [Require Login](/service-settings/service-settings.md#require-login) on, which is also the setting of a project that has never set it, the backend now refuses them to a request with no signed-in user. That includes an older SDK, which has no `REQUIRE_LOGIN` gate of its own and sends the request anyway.
+[`getTables()`](/api-reference/database/README.md#gettables), [`getTags()`](/api-reference/database/README.md#gettags), [`getIndexes()`](/api-reference/database/README.md#getindexes) and [`getUniqueId()`](/api-reference/database/README.md#getuniqueid) used to be served to anyone who knew the project ID. With [Require Login](/service-settings/service-settings.md#require-login) on, which is also the setting of a project that has never set it, the backend now refuses them to a request with no signed-in user. That includes an older SDK, which has no `REQUIRE_LOGIN` gate of its own and sends the request anyway.
 
 An integration that lists them without a signed-in user now gets an error where it used to get a list. If a signed-out page genuinely needs the listing, turn Require Login off in the project settings.

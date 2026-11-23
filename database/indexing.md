@@ -342,7 +342,7 @@ So with a compound index name, the position of the period decides what `<=` matc
 
 ## Fetching Index Information
 
-Skapi tracks the index information in each table. You can fetch the index information using the [`getIndexes()`](/api-reference/database/README.md#getindex) method.
+Skapi tracks the index information in each table. You can fetch the index information using the [`getIndexes()`](/api-reference/database/README.md#getindexes) method.
 
 Index information is useful when you want to list all index names used in a table or find out the total number of the records indexed to that index name or average/total value of the index values.
 
@@ -404,7 +404,7 @@ a call without `table` is rejected with `"table" is required.`
 skapi.getIndexes({ index: 'Vote.Beer' }); // Error: "table" is required.
 ```
 
-[`getIndexes()`](/api-reference/database/README.md#getindex) has no top level `condition`.
+[`getIndexes()`](/api-reference/database/README.md#getindexes) has no top level `condition`.
 The only condition it accepts is `order.condition`, described in [Querying index value](#querying-index-value) below.
 
 ### Who can read index information
@@ -419,10 +419,10 @@ Any caller reads the whole project's index vocabulary.
 The records themselves stay gated, but an index name, and any average or total computed from private values, is visible to every signed in user. An index whose very existence is sensitive does not belong in a table those users can list.
 :::
 
-For more detailed information on all the parameters and options available with the [`getIndexes()`](/api-reference/database/README.md#getindex) method, 
+For more detailed information on all the parameters and options available with the [`getIndexes()`](/api-reference/database/README.md#getindexes) method, 
 please refer to the API Reference below:
 
-### [`getIndexes(query, fetchOptions?): Promise<DatabaseResponse<Index>>`](/api-reference/database/README.md#getindex)
+### [`getIndexes(query, fetchOptions?): Promise<DatabaseResponse<Index>>`](/api-reference/database/README.md#getindexes)
 
 ### Querying index value
 

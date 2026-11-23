@@ -99,7 +99,7 @@ That holds wherever a `Condition` is compared with text:
 | [`getTables()`](/api-reference/database/README.md#gettables) | The table name. See [Table Information](/database/table-info.html). |
 | [`getTags()`](/api-reference/database/README.md#gettags) | The tag, in `table`, or in every table when `table` is omitted. See [Tags](/database/tags.html#querying-tags). |
 | [`getUniqueId()`](/api-reference/database/README.md#getuniqueid) | The unique ID. See [Unique ID](/database/unique-id.html#fetching-unique-id-list). |
-| [`getIndexes()`](/api-reference/database/README.md#getindex) | The index name, when `order.by` is `index_name`. See [Searching index names](/database/indexing.html#searching-index-names). Ordered by anything else, `order.value` is a number and compares normally. |
+| [`getIndexes()`](/api-reference/database/README.md#getindexes) | The index name, when `order.by` is `index_name`. See [Searching index names](/database/indexing.html#searching-index-names). Ordered by anything else, `order.value` is a number and compares normally. |
 
 An 'ends with' search returns its matches in the order of the text read from its last character backwards, not in the order of the text itself.
 
@@ -110,13 +110,13 @@ The default is not the same on every method:
 | --- | --- |
 | [`getTables()`](/api-reference/database/README.md#gettables) | Exact match on `table`. With `table` omitted as well, every table. |
 | [`getTags()`](/api-reference/database/README.md#gettags) | Exact match on `tag` when **both** `table` and `tag` are given. With only `table` given, `>=` (prefix), so every tag in the table. With neither, every tag in the project, ordered by record count, descending. |
-| [`getIndexes()`](/api-reference/database/README.md#getindex) | No top level `condition` exists. `order.condition` omitted is an exact match against `order.value`, and `order.condition` requires `order.value`. With `order.value` omitted as well, every index, in the order of `order.by`. |
+| [`getIndexes()`](/api-reference/database/README.md#getindexes) | No top level `condition` exists. `order.condition` omitted is an exact match against `order.value`, and `order.condition` requires `order.value`. With `order.value` omitted as well, every index, in the order of `order.by`. |
 
 Omit the key, do not blank it out. Passing `condition` explicitly as `undefined` or `null` is rejected with `INVALID_PARAMETER`, while leaving the key out works.
 When you assemble a query object programmatically, `delete` the key rather than setting it to `undefined`.
 
 A `condition` also needs something to compare against, and it is the value key that supplies it.
-Sending a `condition` with that key left out is an error, not a listing: [`getTables()`](/api-reference/database/README.md#gettables) with no `table` is rejected with `"table" is required for condition.`, [`getTags()`](/api-reference/database/README.md#gettags) with neither `table` nor `tag` with `"table" or "tag" is required for condition.`, and [`getIndexes()`](/api-reference/database/README.md#getindex) rejects `order.condition` without `order.value`.
+Sending a `condition` with that key left out is an error, not a listing: [`getTables()`](/api-reference/database/README.md#gettables) with no `table` is rejected with `"table" is required for condition.`, [`getTags()`](/api-reference/database/README.md#gettags) with neither `table` nor `tag` with `"table" or "tag" is required for condition.`, and [`getIndexes()`](/api-reference/database/README.md#getindexes) rejects `order.condition` without `order.value`.
 To list everything instead, leave the `condition` out as well.
 
 While you are exploring and do not know the exact spelling, pass `gte`: it is a prefix search, so it also surfaces related entries.

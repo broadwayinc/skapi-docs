@@ -109,6 +109,8 @@ For lists of types, refer [Data Types](/api-reference/data-types/README.md).
 
 ### Node.js (CommonJS)
 
+Node.js here means a program you run with `node` in a terminal, such as a script or a command line tool. A web app built with Node.js tooling (Vite, webpack ...) runs in the browser: set it up as an SPA above.
+
 To use Skapi in Node.js (CommonJS), import the library as shown below:
 
 ```javascript
@@ -123,7 +125,16 @@ import { Skapi } from 'skapi-js';
 const skapi = new Skapi("<Project ID>");
 ```
 
-> **Note:** When running Skapi in Node.js, browser-specific features such as WebSocket, WebRTC, and Notifications are unavailable.
+In Node.js, skapi-js works the same as in the browser, except for the features that need a browser:
+
+- **Realtime:** `connectRealtime()`, `postRealtime()`, `joinRealtime()` and `closeRealtime()` throw `NOT_SUPPORTED`.
+- **WebRTC calls:** `connectRTC()` and `closeRTC()` throw `NOT_SUPPORTED`.
+- **Web push notifications:** `subscribeNotification()`, `unsubscribeNotification()`, `vapidPublicKey()` and `pushNotification()` throw `NOT_SUPPORTED`.
+- **HTML forms:** there is no form element or `SubmitEvent` to pass: pass plain objects. `getFormResponse()` has no form submit to read.
+- **Files on a record:** files passed to `postRecord()` are not uploaded.
+- **Record encryption:** the key is not remembered between runs. After a session is restored, call `unlockEncryption()` with the password.
+
+The session is saved as files under `./states/localStorage/` in the working directory, so the next run starts signed in.
 
 ### Checking the Connection
 
@@ -224,17 +235,17 @@ The Skapi MCP server connects your AI app to your Skapi projects, signed in with
 
 Add this address to your AI app as a remote MCP server, then sign in with your Skapi account:
 
-**https://mcp.broadwayinc.computer**
+**https://mcp.skapi.com**
 
 The same address, opened in a browser, is the full guide: the steps for each AI app, connecting without a browser, what to ask, and troubleshooting.
 
-**[Open the Skapi MCP guide](https://mcp.broadwayinc.computer)**
+**[Open the Skapi MCP guide](https://mcp.skapi.com)**
 
 ### Using the base prompt
 
 The base prompt is one Markdown file that teaches an AI how to build with Skapi:
 
-- **[SKAPI.md](https://docs.skapi.com/SKAPI.md)** (<a href="/SKAPI.md" download="SKAPI.md">download</a>), about 27 KB: the rules, a map of this documentation and an index of every SDK method. Each entry links to its page under `https://docs.skapi.com/md/` (every page of this site as raw markdown, at the same path), and the AI opens a page when it builds that feature, so it needs to be able to open public web pages.
+- **[SKAPI.md](https://docs.skapi.com/SKAPI.md)** (<a href="/SKAPI.md" download="SKAPI.md">download</a>), about 16 KB: the rules, a map of this documentation and an index of every SDK method. The map and the index link to each page under `https://docs.skapi.com/md/` (every page of this site as raw markdown, at the same path), and the AI opens a page when it builds that feature, so it needs to be able to open public web pages.
 - **[SKAPI-full.md](https://docs.skapi.com/SKAPI-full.md)**, about 1.3 MB: the whole documentation in one file, for an AI that cannot open web pages. It is too large to paste, so attach it as a file, in an app that accepts files that size.
 
 To use it:
