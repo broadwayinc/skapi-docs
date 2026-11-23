@@ -11,7 +11,7 @@
 //                    absolute /md/ urls. The agent reads the page a feature needs, when it needs
 //                    it, and reaches a page that is not on the sidebar through the links on the
 //                    pages that are (the map in SKAPI.md is the sidebar, nothing more).
-//   SKAPI-full.md    the same prompt and every page in one file, for tools that index a single
+//   SKAPI-FULL.md    the same prompt and every page in one file, for tools that index a single
 //                    document. Links stay inside the file.
 //   llms.txt         the list of all of the above (https://llmstxt.org).
 //
@@ -43,9 +43,9 @@ const SKAPI_VERSION = await skapiVersion({ fresh: true });
 const OUT_DIR = './public';
 const PAGES_DIR = 'md';
 const PROMPT_FILE = 'SKAPI.md';
-const FULL_FILE = 'SKAPI-full.md';
+const FULL_FILE = 'SKAPI-FULL.md';
 /** Written by earlier versions of this script; removed so a stale copy is never served. */
-const RETIRED_FILES = ['skapi-docs.md', 'skapi-types.md'];
+const RETIRED_FILES = ['skapi-docs.md', 'skapi-types.md', 'SKAPI-full.md'];
 const PROMPT_MAX_BYTES = 30000;
 const DEMO_BASE = 'https://cdn.broadwayinc.com/temp/v10/';
 const PROMPT_DOWNLOADS = './.vitepress/theme/AgentPromptDownloads.vue';
@@ -260,7 +260,7 @@ function buildPages(pages, report, mode) {
         // A page written with the site's full address ("https://docs.skapi.com/x.html#y") is
         // the same page as "/x.md#y": when that path is a page of this set, resolve it like a
         // site link, so the agent is sent to the raw file and not to the website. Any other
-        // absolute url (a raw file under /md/, SKAPI-full.md, an image) is left as written.
+        // absolute url (a raw file under /md/, SKAPI-FULL.md, an image) is left as written.
         if (target.startsWith(DOCS_ORIGIN + '/')) {
             let sitePath = target.slice(DOCS_ORIGIN.length).split('#')[0];
             if (!byKey[pageKey(sitePath).toLowerCase()]) return null;
@@ -451,7 +451,7 @@ function llmsTxt(pages, others) {
         '',
         '## The whole documentation in one file',
         '',
-        `- [SKAPI-full.md](${DOCS_ORIGIN}/${FULL_FILE}): the prompt and every page in one markdown file, for tools that index a single document. Too large for a chat context.`,
+        `- [SKAPI-FULL.md](${DOCS_ORIGIN}/${FULL_FILE}): the prompt and every page in one markdown file, for tools that index a single document. Too large for a chat context.`,
         '',
         '## Base prompts for the other Skapi SDKs',
         '',

@@ -7,7 +7,7 @@ SKAPI.md
 # Claude Code agent worktrees (nested checkouts, never commit)
 .claude/worktrees/
 public/llms.txt
-SKAPI-full.md
+SKAPI-FULL.md
 public/md/
 *.pid
 nohup.out

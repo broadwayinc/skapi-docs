@@ -3,7 +3,7 @@
 // which pages stay out of search.
 //
 // It lives here and not in each page's frontmatter because the guide and reference
-// pages are also written, raw, as md/<page>.md and into SKAPI-full.md (agent-docs.mjs)
+// pages are also written, raw, as md/<page>.md and into SKAPI-FULL.md (agent-docs.mjs)
 // (see all_files.mjs). A page may still set `title:` or `description:` frontmatter;
 // that wins over this map, and all_files.mjs strips frontmatter from the bundles.
 //
@@ -107,7 +107,7 @@ export const PAGES = {
     },
     'SYSTEM.md': {
         title: 'Base Prompt for AI Agents',
-        description: 'The base prompt an AI coding agent loads before building with Skapi. SKAPI.md is the built version with the documentation map and the method index; SKAPI-full.md adds every page.',
+        description: 'The base prompt an AI coding agent loads before building with Skapi. SKAPI.md is the built version with the documentation map and the method index; SKAPI-FULL.md adds every page.',
     },
 
     // Introduction
