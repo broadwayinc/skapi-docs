@@ -35,6 +35,7 @@ import path from 'path';
 import all_files, { method_ref, full_examples, api_reference, version_history, deprecated } from './all_files.mjs';
 import { skapiVersion, withVersion } from './.vitepress/skapi-version.mjs';
 import { PAGES, DEFAULT_DESCRIPTION, NOINDEX } from './.vitepress/seo-pages.mjs';
+import { SDK_PLATFORMS, sdkPlatformsMarkdown } from './.vitepress/theme/sdk-platforms.mjs';
 
 const DOCS_ORIGIN = 'https://docs.skapi.com';
 /** The published skapi-js version every `skapi-js@latest` in a code example is written as. */
@@ -451,6 +452,10 @@ function llmsTxt(pages, others) {
         '## The whole documentation in one file',
         '',
         `- [SKAPI-full.md](${DOCS_ORIGIN}/${FULL_FILE}): the prompt and every page in one markdown file, for tools that index a single document. Too large for a chat context.`,
+        '',
+        '## Base prompts for the other Skapi SDKs',
+        '',
+        ...SDK_PLATFORMS.filter((p) => p.prompt !== `${DOCS_ORIGIN}/${PROMPT_FILE}`).map((p) => `- [${p.sdk}](${p.prompt}): for ${p.use}.`),
     ];
     let optional = [];
     for (let node of all_files) {
@@ -502,7 +507,8 @@ function build() {
     let system = (mode, pages) => {
         let text = fs.readFileSync('./SYSTEM.md', 'utf-8')
             .replace('<!-- DOCUMENTATION_MAP -->', documentationMap(pages, mode))
-            .replace('<!-- METHOD_INDEX -->', methodIndex(pages, mode));
+            .replace('<!-- METHOD_INDEX -->', methodIndex(pages, mode))
+            .replace('<!-- SKAPI_SDKS -->', sdkPlatformsMarkdown('js'));
         let page = loadPage('/SYSTEM.md', report, text);
         page.key = page.id = '';
         return page;

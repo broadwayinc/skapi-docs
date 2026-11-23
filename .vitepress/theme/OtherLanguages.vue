@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SDK_PLATFORMS } from './sdk-platforms.mjs'
 /**
  * Home page only (rendered in VPHome's home-features-after slot, see index.ts): links to
  * the Skapi SDK docs for the other languages. The same file is in all four docs sites
@@ -7,49 +8,8 @@
  */
 const props = defineProps<{ current: 'js' | 'py' | 'swift' | 'jvm' }>()
 
-const all = [
-  {
-    id: 'js',
-    name: 'HTML, JavaScript & TypeScript',
-    logos: [
-      { src: '/lang/html.svg', alt: 'HTML logo' },
-      { src: '/lang/javascript.svg', alt: 'JavaScript logo' },
-      { src: '/lang/typescript.svg', alt: 'TypeScript logo' },
-    ],
-    details: 'npm install skapi-js. Use it in plain HTML, any JavaScript framework, or Node.js.',
-    link: 'https://docs.skapi.com',
-    host: 'docs.skapi.com',
-  },
-  {
-    id: 'py',
-    name: 'Python',
-    logos: [{ src: '/lang/python.svg', alt: 'Python logo' }],
-    details: 'pip install skapi. Use it in client applications: command line tools and scripts.',
-    link: 'https://py.skapi.com',
-    host: 'py.skapi.com',
-  },
-  {
-    id: 'swift',
-    name: 'Swift',
-    logos: [{ src: '/lang/swift.svg', alt: 'Swift logo' }],
-    details: 'One Swift package for iOS and macOS apps, with async/await calls and no third-party dependencies.',
-    link: 'https://ios.skapi.com',
-    host: 'ios.skapi.com',
-  },
-  {
-    id: 'jvm',
-    name: 'Kotlin & Java',
-    logos: [
-      { src: '/lang/kotlin.svg', alt: 'Kotlin logo' },
-      { src: '/lang/java.svg', alt: 'Java logo' },
-    ],
-    details: 'One library for client applications: Android apps, Kotlin and Java desktop programs and command line tools.',
-    link: 'https://jvm.skapi.com',
-    host: 'jvm.skapi.com',
-  },
-]
-
-const languages = all.filter((lang) => lang.id !== props.current)
+// The tiles come from the SDK list the base prompts are built from (sdk-platforms.mjs).
+const languages = SDK_PLATFORMS.filter((lang) => lang.tile !== false && lang.id !== props.current)
 </script>
 
 <template>

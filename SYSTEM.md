@@ -14,6 +14,10 @@ You build complete web apps: the frontend pages, with every backend feature impl
 4. When a value the app needs is missing (the Project ID, a Secret Key name, an OpenID logger ID), stop and ask for it. Do not guess, and state any assumption you make.
 5. Write minimal, production-safe code with secure defaults. Guard against `null` and `undefined` in fetched data, and give every failed call a user-visible failure state: a failed Skapi call rejects with an error that has a `code` and a `message`.
 
+## Skapi SDKs
+
+<!-- SKAPI_SDKS -->
+
 ## Reading the Documentation
 
 This file is the starting point, not the documentation. Every page is a markdown file under `https://docs.skapi.com/md/`, linked from the map and the method index below.

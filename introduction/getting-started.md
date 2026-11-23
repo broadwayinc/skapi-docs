@@ -243,9 +243,9 @@ The same address, opened in a browser, is the full guide: the steps for each AI 
 
 ### Using the base prompt
 
-The base prompt is one Markdown file that teaches an AI how to build with Skapi:
+The base prompt is one Markdown file that teaches an AI how to build with Skapi. This one is for skapi-js: web apps, and Node.js programs. For a Python program use [py.skapi.com/SKAPI.md](https://py.skapi.com/SKAPI.md), for an iOS or macOS app [ios.skapi.com/SKAPI.md](https://ios.skapi.com/SKAPI.md), and for an Android, Kotlin or Java app [jvm.skapi.com/SKAPI.md](https://jvm.skapi.com/SKAPI.md).
 
-- **[SKAPI.md](https://docs.skapi.com/SKAPI.md)** (<a href="/SKAPI.md" download="SKAPI.md">download</a>), about 16 KB: the rules, a map of this documentation and an index of every SDK method. The map and the index link to each page under `https://docs.skapi.com/md/` (every page of this site as raw markdown, at the same path), and the AI opens a page when it builds that feature, so it needs to be able to open public web pages.
+- **[SKAPI.md](https://docs.skapi.com/SKAPI.md)** (<a href="/SKAPI.md" download="SKAPI.md">download</a>), about 18 KB: the rules, a map of this documentation and an index of every SDK method. The map and the index link to each page under `https://docs.skapi.com/md/` (every page of this site as raw markdown, at the same path), and the AI opens a page when it builds that feature, so it needs to be able to open public web pages.
 - **[SKAPI-full.md](https://docs.skapi.com/SKAPI-full.md)**, about 1.3 MB: the whole documentation in one file, for an AI that cannot open web pages. It is too large to paste, so attach it as a file, in an app that accepts files that size.
 
 To use it:
