@@ -21,6 +21,7 @@ forwardRequest(
         expires?: number; // Optional expiration time in seconds for the request record.
         stream?: boolean; // Read the destination's response INCREMENTALLY and relay the raw bytes as they arrive, instead of downloading the whole body first. Requires a queue, and mints one when you did not name one. Never sent to the destination. Defaults to false. See Streaming below.
         realtime?: boolean; // ALSO push each relayed piece over skapi's websocket, so onStream fires as the piece is relayed instead of on the next poll tick. Only meaningful alongside stream and onStream. Purely an accelerator: the poll still runs and still carries the read on its own if the socket cannot be opened. Defaults to false. See Streaming below.
+        notify?: boolean; // Status push (SDK 2.5.0 or newer). Each status change of this queued request (pending, running, resolved, failed, cancelled) is sent to the signed-in user's websocket connections, and its poll then reads the request when a change arrives plus once a minute, instead of at every interval. Needs a signed-in user and a queue; otherwise it is ignored. Purely an accelerator: with no socket or no messages the poll runs at its normal interval. Defaults to false. See onRequestStatus below.
         onStream?: (chunk: string, seq: number, via?: 'socket' | 'poll') => void; // Called with each relayed piece, in order, with the sequence number it was stored under and which transport carried it. Raw text, never parsed. Its presence is what makes the poll loop fetch chunks at all.
         onResponse?: (res: any, meta?: { executed?: number }) => void; // Called with the final response once polling resolves, or immediately for non-queued direct responses. `meta` carries facts about the REQUEST rather than the response, because a settled poll resolves with the destination's own answer and there is nowhere in that answer to put one of skapi's. `meta.executed` is when the worker BEGAN running the request, in milliseconds, the same value forwardRequestHistory() reports as `executed`; `updated - executed` is the call itself, while `updated - created` also counts the wait in the queue. Optional: a request that began and ended between two poll ticks never showed a status envelope and has none, so show nothing rather than falling back to `created`. A one-argument callback is unaffected. Delivered only when this request was QUEUED and therefore polled: a direct, non-queued response never went through a poll and is called with one argument.
         onError?: (err: any) => void; // Called when polling or the initial request fails.
@@ -33,6 +34,7 @@ forwardRequest(
     queue_name: string;   // The queue this request belongs to (plain queue name).
     in_queue: number;     // Unresolved requests in this queue, INCLUDING this one. 1 means this request is at the head (processing next); 2 means one request is ahead of it.
     realtime_group?: string; // Present when the request was made with realtime: true. The room its pieces are pushed to. Keep it beside the ID if you may want to re-attach later: forwardRequestStream() takes it as realtimeGroup, and it cannot be rebuilt from the ID.
+    notify?: true; // Present when notify: true was accepted. Absent when the server does not support it yet or nobody is signed in: the poll then runs at its normal interval.
     poll?: (arg?: { latency?: number; onStream?: (chunk: string, seq: number, via?: 'socket' | 'poll') => void }) => Promise<any>; // Present when the request was queued. Call to start manual polling. In practice you only receive this object when poll is omitted or 0. See Behavior below.
 }>
 ```
@@ -323,6 +325,50 @@ isPollStopped(
 
 Distinguishes a stopped poll from a real API result, so a handler can ignore it instead of treating
 `{ status: 'stopped' }` as a response.
+
+## onRequestStatus
+
+```ts
+onRequestStatus(
+    callback: (event:
+        | {
+            type: 'status';
+            id: string;        // The request ID ("stamp:entropy"), as forwardRequest() returned it.
+            queue?: string;    // The queue the request is on.
+            status: 'pending' | 'running' | 'resolved' | 'failed' | 'cancelled';
+            previous?: string; // The status before this change. Absent when the request was just created.
+            updated?: number;  // When the request changed, in milliseconds.
+            executed?: number; // When the server began running the request, in milliseconds.
+        }
+        | { type: 'connected' | 'disconnected' }
+    ) => void
+): () => void // Removes the listener.
+```
+
+SDK 2.5.0 or newer. Tells you when a request made with `notify: true` changes status, including
+requests this page holds no poll for: one the server queued as the continuation of yours, or one
+sent from another tab of the same user.
+
+- The websocket stays open while a listener is registered. One is opened when your app has none
+  and a user is signed in, and closed 10 minutes after the last listener and the last `notify`
+  poll are gone. A connection your app opened itself is used as it is and never closed.
+- These messages never reach your own `connectRealtime()` callback.
+- `{ type: 'connected' }` arrives whenever the listener is on an open connection: the first time,
+  and again after every reconnect. Messages sent while the connection was down are not kept, so
+  read again whatever you show when it arrives. `{ type: 'disconnected' }` arrives when the
+  connection drops.
+- A status event is a hint, not the result: read the request (its `poll()`, or
+  `forwardRequestHistory()`) for the outcome.
+
+## isRequestStatusLive
+
+```ts
+isRequestStatusLive(): boolean
+```
+
+`true` while status messages are arriving: the server accepted `notify` on one of this page's
+requests, the websocket is open, and a status message has arrived on it. Polls of `notify`
+requests slow down only while this is `true`.
 
 ## forwardRequestQueueCount
 

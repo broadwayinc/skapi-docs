@@ -1,6 +1,13 @@
 # Version History
 
-### Current version: 2.4.5
+### Current version: 2.5.0
+
+**2.5.0**
+
+New:
+
+- **Status push for queued requests: `notify: true`.** `forwardRequest()` (and the deprecated `clientSecretRequest()`) take `notify: true` for a queued request made by a signed-in user. Each status change of the request then arrives on the user's websocket, and its poll reads the request when a change arrives plus once a minute, instead of at every interval. The reply says `notify: true` when the server accepted it; otherwise nothing changes. A connection your app opened is used as it is, and these messages never reach your realtime callback. A `poll()` on a `forwardRequestHistory()` item takes `notify: true` too. See [Status push with notify](/api-bridge/polling-request.md#status-push-with-notify).
+- **`onRequestStatus(callback)`** listens to those status changes, including requests this page holds no poll for, and reports `connected` after every reconnect so you can read again what you show. **`isRequestStatusLive()`** says whether messages are arriving.
 
 **2.4.5**
 

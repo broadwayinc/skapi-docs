@@ -100,6 +100,55 @@ A poll started from a `forwardRequestHistory()` item is the exception: it takes 
 A callback that declares one parameter is unaffected, and `onResponse` on a direct, non-queued `forwardRequest()` receives no `meta`, since nothing ever recorded an execution start for a request that was never queued.
 
 
+## Status push with `notify`
+
+With `notify: true` (SDK 2.5.0 or newer) the server tells the signed-in user's browser each time a
+queued request changes status. The poll then reads the request only when a change arrives, plus
+once a minute, instead of at every interval, and the result shows up about a second after the
+server has it.
+
+```js
+const result = await skapi.forwardRequest(null, {
+    url: 'https://api.openai.com/v1/images/generations',
+    secretName: 'openai',
+    queue: 'image-queue',
+    poll: 3000,
+    notify: true,
+});
+```
+
+- It needs a signed-in user and a queue. Without them, or when the server does not support it yet,
+  the reply has no `notify: true` and the poll runs at its normal interval.
+- The messages travel on skapi's websocket. One is opened while it is needed if your app has none,
+  and closed 10 minutes after nothing uses it. A connection your app opened itself is used as it is,
+  and these messages never reach your own realtime callback.
+- The poll slows down only while messages are actually arriving. If the connection drops, it goes
+  back to your interval at once. A message that is lost costs at most the once-a-minute read, never
+  a wrong result: the poll always reads the request itself before it settles.
+
+To hear about requests you hold no poll for, and to know when the connection comes back, listen
+with `onRequestStatus()`:
+
+```js
+const stop = skapi.onRequestStatus((event) => {
+    if (event.type === 'connected') {
+        // Messages sent while the connection was down are not kept: read again what you show.
+        refreshMyList();
+        return;
+    }
+    if (event.type === 'status') {
+        console.log(event.id, event.previous, '->', event.status);
+    }
+});
+
+// later
+stop();
+```
+
+### [`onRequestStatus(callback): () => void`](/api-reference/api-bridge/README.md#onrequeststatus)
+
+### [`isRequestStatusLive(): boolean`](/api-reference/api-bridge/README.md#isrequeststatuslive)
+
 ## Stopping Polling
 
 Polling and the request itself are separate things. `stopForwardRequestPolling()` stops *watching* a
