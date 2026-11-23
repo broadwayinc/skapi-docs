@@ -141,3 +141,23 @@ what you get is what you posted, whatever its size. The file it lives in never a
 and it cannot be uploaded or deleted by name: `"__data__/__json__.json"` is a reserved file name in
 [`postRecord()`](/api-reference/database/README.md#postrecord) and in
 [`deleteFiles()`](/api-reference/database/README.md#deletefiles).
+
+## Reserved data key: `__skapi__`
+
+The key `__skapi__` at the top of a record's `data` is where Skapi features read their settings. Everything
+else in `data` is your app's own, and Skapi never reads meaning into it.
+
+Today one feature reads it: [link previews](/hosting/hosting.md#link-previews) of a hosted site read
+`data.__skapi__.og` of a record in the `public` access group, to show its title and picture when the address
+`https://<name>.skapi.com/__skapi__/og/<record_id>` is shared:
+
+```js
+skapi.postRecord(
+    { photo: 42, __skapi__: { og: { title: 'Sunset over the bay', image: 'preview', url: '/index.html#photo=42' } } },
+    { table: { name: 'share_cards', access_group: 'public' } },
+    [{ name: 'preview', file: previewImageFile }]
+);
+```
+
+Leave `__skapi__` out of your own data unless you mean to use such a feature. Features added later read other
+keys inside it, so keep your own fields outside it.
