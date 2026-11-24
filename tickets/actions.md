@@ -144,6 +144,7 @@ Posts one record to the project's database, the way [`postRecord()`](/api-refere
       referencing_limit?: number | null;
       prevent_multiple_referencing?: boolean;
       can_remove_referencing_records?: boolean;
+      can_modify_referencing_records?: boolean;
       only_granted_can_reference?: boolean;
       allow_granted_to_grant_others?: boolean;
       referencing_index_restrictions?: {
@@ -254,6 +255,7 @@ For the example above, the Then chain reads this as `${response}`, and a Check a
     "referencing_limit": null,
     "prevent_multiple_referencing": false,
     "can_remove_referencing_records": false,
+    "can_modify_referencing_records": false,
     "only_granted_can_reference": false
   },
   "ip": "203.0.113.10",
@@ -261,7 +263,7 @@ For the example above, the Then chain reads this as `${response}`, and a Check a
 }
 ```
 
-`${response[record_id]}` is the record's id, `${response[data][amount]}` the amount it holds and `${response[table][name]}` its table; a Check answer row with the key `record_id` captures the id into a placeholder. `tags` and `reference` appear when the record has them.
+`${response[record_id]}` is the record's id, `${response[data][amount]}` the amount it holds and `${response[table][name]}` its table; a Check answer row with the key `record_id` captures the id into a placeholder. `tags`, `reference` and `updated_by` appear when the record has them: `updated_by` is the user ID of whoever made the record's last update when that was not its uploader, for example a `pstr` that updates another user's record. `ip` carries the address only when the action posts as the record's uploader, as the project owner (no `user_id`) or as an admin in access group 99; otherwise it is an empty string, or `0.0.0.0` for a record posted by a signed-out user.
 
 ## `req`: HTTP request with its own condition and chain
 

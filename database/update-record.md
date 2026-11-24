@@ -85,6 +85,10 @@ If `null` is used instead of undefined, the record data will be overwritten to v
 
 :::info
 Only the owner of the record can update it. The project owner and admins in access group `99` can also update other users' records, read-only ones included, and admins in access groups `90` ~ `98` can change only their [subscription settings](/database/subscription.md#who-can-change-subscription-settings). Every admin and the project owner can also attach files to another user's record and delete its files, see [Files on Records of Other Users](/database/handling-files.md#files-on-records-of-other-users). Nobody but the owner can update a private record or change its files. See [Updating another user's record](/admin/permissions.md#updating-another-user-s-record).
+
+The uploader of a record created with `source.can_modify_referencing_records` can also change the `data`, `tags` and `index` of other users' records that reference it, or unlink them with `reference: null`. See [Letting the referenced record's owner modify referencing records](/database/referencing.md#letting-the-referenced-record-s-owner-modify-referencing-records).
+
+When someone other than its uploader last updated a record, the record has `updated_by`, that user's ID. It is removed when the uploader updates the record again.
 :::
 
 ## Readonly Record

@@ -1,6 +1,20 @@
 # Version History
 
-### Current version: 2.5.0
+### Current version: 2.6.0
+
+**2.6.0**
+
+New:
+
+- **`source.can_modify_referencing_records`.** A record uploaded with `source: { can_modify_referencing_records: true }` lets its uploader change the `data`, `tags` and `index` of other users' records that reference it, or unlink them with `reference: null`, with [`postRecord()`](/api-reference/database/README.md#postrecord) and the record's `record_id`. Nothing else of such a record can be changed this way, and private and read-only records are refused. The uploader can set it only when the record is created and can turn it off at any time; only the project owner and admins in access group `99` can turn it on for an existing record. It is returned in `record.source.can_modify_referencing_records`. See [Letting the referenced record's owner modify referencing records](/database/referencing.md#letting-the-referenced-record-s-owner-modify-referencing-records).
+- **`record.updated_by`**: the user ID of the user who last updated the record when that was not its uploader (the owner of the referenced record, the project owner or an admin). It is absent when the uploader made the last update. See [Who changed a record](/database/referencing.md#who-changed-a-record-updated-by).
+
+Fixes and changes on the server, for every SDK version:
+
+- **A record's IP address is returned only to its uploader, the project owner and admins in access group `99`.** Everyone else reads `ip` as an empty string, or `0.0.0.0` for a record a signed-out user posted from an IPv4 address, so its `user_id` still starts with `anonymous:`. `readonly` and `unique_id` read as before. See [RecordData](/api-reference/data-types/README.md#recorddata).
+- **`reference: null` no longer lets a record into a higher access group.** A user can post a record in an access group above their own only when the request references a record (a reply to a record in that group). Unlinking with `reference: null`, or an update of a record that keeps the reference it already has but moves to another access group, is refused with `User has no access to this group.` like any other post above the user's access group.
+- **A record that stops referencing a record leaves its lists.** After its reference is removed or changed, it is no longer returned by `getRecords()` with the old `reference` (tag and private record reads included) or by the old referenced record's uploader's [`getFeed()`](/api-reference/database/README.md#getfeed).
+- **Record files of type HTML, SVG, XML or JavaScript are downloaded instead of opened as pages.** Files attached to records are served with headers that keep the browser from running them, so a file uploaded by a user cannot run scripts on the file's address. Images, video, audio, PDFs and [hosted](/hosting/hosting.md) sites are not affected.
 
 **2.5.0**
 

@@ -155,6 +155,84 @@ skapi.postRecord(undefined, {
 });
 ```
 
+## Letting the referenced record's owner modify referencing records
+
+By default only the user who uploaded a record can change it. Set `source.can_modify_referencing_records` to `true` when you upload a record, and its uploader can also change the records that other users post referencing it.
+This is useful for a discussion board where the post's author moderates the comments, a support thread where the author marks the answers, or a form whose author updates the status of each submission.
+
+```js
+// The post: its uploader may change the comments that reference it.
+skapi.postRecord({
+    post: "What do you think of this post?"
+}, {
+    table: { name: 'Posts', access_group: 'public' },
+    source: {
+        can_modify_referencing_records: true
+    }
+});
+```
+
+The post's uploader updates another user's comment with [`postRecord()`](/api-reference/database/README.md#postrecord) and the comment's `record_id`, as they would update their own record:
+
+```js
+skapi.postRecord({
+    comment: "This comment was hidden by the author of the post."
+}, {
+    record_id: 'record_id_of_the_comment',
+    tags: ['hidden'],
+    index: { name: 'status', value: 'hidden' }
+}).then(comment => {
+    console.log(comment.user_id);    // Still the user who posted the comment.
+    console.log(comment.updated_by); // The user ID of the post's uploader.
+});
+```
+
+### What can be changed
+
+The post's uploader can change only these on a record that references their post:
+
+- `data`
+- `tags`
+- `index`. The post's [`referencing_index_restrictions`](#referencing-index-restrictions) still apply to the new index while the record references the post.
+- `reference: null`, which unlinks the record from the post:
+
+```js
+skapi.postRecord(undefined, {
+    record_id: 'record_id_of_the_comment',
+    reference: null
+});
+```
+
+Once unlinked, the record no longer references the post, so the post's uploader can no longer change it.
+
+Everything else is refused with `INVALID_REQUEST`, and nothing is written:
+
+- The table name, the access group, the subscription settings, `readonly`, `unique_id`, any `source` setting, and removing every file with `remove_bin: null`. The message names the first field that differs: `The referenced record's user can only change the data, tags and index of a record that references theirs, or unlink it ({field} differs).` A value sent as it is already stored is not a change, so a request that resends the record's whole config is fine.
+- Removing files by URL with `remove_bin`: `The binary should be owned by the user.` The files belong to the user who posted the record.
+- Pointing the reference at any other record. Only `null` is allowed.
+- A private record that references the post: `The referenced record's user cannot update a private record.`
+- A read-only record: `Record is read only.`
+- A record in an access group above the post uploader's own: `User has no access to this group.`
+
+Files cannot be attached either. The record is saved first, then each file asks for an upload permit, and those permits are refused (`User has no access to update this record.`). So the `data`, `tags`, `index` or `reference` change is already saved, and the files are not attached: with 1 to 4 files `postRecord()` and [`uploadFiles()`](/api-reference/database/README.md#uploadfiles) reject with that error, and with 5 or more they resolve and report each file in `failed`. Do not send files when changing another user's record.
+
+The record keeps its owner: `user_id` stays the user who posted it, its files stay theirs, and that user can still update or delete it in full.
+
+### When it can be turned on
+
+`can_modify_referencing_records` hands other users' records to the record's uploader, so the users who reference a record must be able to see it before they post. That is why the uploader can set it to `true` only when the record is **created**:
+
+- On an update, the uploader can turn it off (`false`) at any time, but cannot turn it on. Turning it on for an existing record is refused with `"source.can_modify_referencing_records" can only be set when the record is created. Only the project owner and admins in access group 99 can turn it on for an existing record.`
+- The project owner and admins in access group `99` can turn it on for an existing record. Admins in access groups `90` ~ `98` can change only the [subscription settings](/database/subscription.md#who-can-change-subscription-settings) of another user's record, so they cannot.
+
+The setting is returned in `record.source.can_modify_referencing_records`.
+
+### Who changed a record: `updated_by`
+
+When a record was last updated by someone other than its uploader (the referenced record's owner through this setting, the project owner or an admin), the record has `updated_by`: the user ID of that user. It is removed when the record's uploader updates the record again. `updated_by` cannot be set by a request.
+
+The record that [`postRecord()`](/api-reference/database/README.md#postrecord) returns to the post's uploader after such an update has an empty `ip`, or `0.0.0.0` for a record posted by a signed-out user: a record's IP address is returned only to its uploader, the project owner and admins in access group `99`.
+
 ## Reference source settings in [`postRecord()`](/api-reference/database/README.md#postrecord)
 
 When uploading record via [`postRecord()`](/api-reference/database/README.md#postrecord), you can set restrictions on referencing from other records using additional parameters in `source`.
@@ -171,6 +249,10 @@ When uploading record via [`postRecord()`](/api-reference/database/README.md#pos
   When the owner removes the record, all the referenceing records will be removed.
   This can be useful when you want to build a discussion board where the owner can remove the comments.
   The default value is `false`.
+
+- `source.can_modify_referencing_records`: If set to `true`, the owner of the record can change the `data`, `tags` and `index` of the records that reference it, or unlink them with `reference: null`.
+  Only the uploader can set it, and only when the record is created; the project owner and admins in access group `99` can turn it on later. Anyone who can update the record can turn it off.
+  The default value is `false`. See [Letting the referenced record's owner modify referencing records](#letting-the-referenced-record-s-owner-modify-referencing-records).
 
 - `source.only_granted_can_reference`: When set to `true`, only the user who has granted private access to the record can reference this record.
 
@@ -294,6 +376,8 @@ Note that the "Review.Album.GetzGilberto" `index` uses a `value` of type `number
    Meaning, the user who uploaded the source of the reference record can have authority to delete the referencing records owned by other users, have access to all access levels referencing records including private records.
 
    This is useful when you want to build a discussion board where the owner can remove the comments, let users post private comments to reference owner.
+
+   With `source.can_modify_referencing_records`, the owner can also edit the comments' data, tags and index, or unlink them from the post. See [Letting the referenced record's owner modify referencing records](#letting-the-referenced-record-s-owner-modify-referencing-records).
    
 2. Rating/voting system
    
