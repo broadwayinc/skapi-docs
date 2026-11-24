@@ -55,7 +55,7 @@ postRecord(
         remove_bin?: BinaryFile[] | string[] | null; // If the BinaryFile object or the url of the file is given, it will remove the bin data(files) from the record. The file should be uploaded to this record. If null is given, it will remove all the bin data(files) from the record. (not available to anonymous users)
         progress?: ProgressCallback; // Progress callback function. Useful when uploading files.
     },
-    /** Files to attach to the record. Each file is uploaded with a permit issued for exactly its byte size, so a request that sends a different number of bytes is refused by storage. The project owner and admins (access groups 90 ~ 99) can attach files to another user's record unless it is private. See [Files on Records of Other Users](/database/handling-files.md#files-on-records-of-other-users) */
+    /** Files to attach to the record. Each file is uploaded with a permit issued for exactly its byte size, so a request that sends a different number of bytes is refused by storage. The returned record lists the files at once; the stored record lists them a moment later (usually within 1 to 3 seconds), so a getRecords() call made right after can return it without them. See [When the files show on the record](/database/handling-files.md#when-the-files-show-on-the-record). The project owner and admins (access groups 90 ~ 99) can attach files to another user's record unless it is private. See [Files on Records of Other Users](/database/handling-files.md#files-on-records-of-other-users) */
     files?: { name: string; file: File }[]
 ): Promise<RecordData>
 ```
@@ -683,6 +683,8 @@ uploadFiles(
 ```
 
 Files are uploaded one after another. A file storage does not accept does not stop the rest: it is listed in `failed`, and `errors` says why, see [Uploading Files to an Existing Record](/database/handling-files.md#uploading-files-to-an-existing-record).
+
+The call resolves once storage has accepted the files. The record lists them a moment later, usually within 1 to 3 seconds, so a `getRecords()` call made right after can return the record without them. See [When the files show on the record](/database/handling-files.md#when-the-files-show-on-the-record).
 
 With five files or more, the upload permits are requested 100 to a request (`POST /get-signed-urls`) instead of one request per file; the files still go up one after another and the result is the same. A file the server refuses a permit for is listed in `failed` and `errors` with the server's `code`, and its slot in `bin_endpoints` is an empty string. Where the bulk permit route is not available, the permits are requested one per file as before, automatically. See [Many files](/database/handling-files.md#many-files).
 

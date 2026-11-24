@@ -463,7 +463,9 @@ await skapi.postRecord(
 );
 ```
 
-Reading requires `getFile()`, which decrypts:
+Reading requires `getFile()`, which decrypts. A record read right after the upload may not list
+the file yet, because the stored record gets new files a moment after they upload: see
+[When the files show on the record](/database/handling-files.md#when-the-files-show-on-the-record).
 
 ```js
 const rec = (await skapi.getRecords({ record_id })).list[0];

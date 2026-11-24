@@ -58,6 +58,13 @@ This process is handled seamlessly without any complicated file handling require
 
 Once the files are uploaded, Skapi serves the files using a CDN with no additional setup required.
 
+:::info The stored record lists new files a moment later
+The record that [`postRecord()`](/api-reference/database/README.md#postrecord) returns lists its files at once: the SDK adds them from the upload itself.
+The stored record gets them a moment after each upload finishes, usually within 1 to 3 seconds, because storage reports every new file to the database on its own.
+So a [`getRecords()`](/api-reference/database/README.md#getrecords) call made right after `postRecord()` can return the record without its new files.
+If you need to read the record again right away, see [When the files show on the record](#when-the-files-show-on-the-record).
+:::
+
 :::info Every upload is signed for the size it declares
 Skapi asks storage for a one file upload permit, and that permit is issued for **exactly** the byte size
 the request declares. A request that then sends a different number of bytes is refused by storage and
@@ -69,7 +76,7 @@ if you build the upload request yourself instead of using [`postRecord()`](/api-
 
 A refused upload does not fail the record. [`postRecord()`](/api-reference/database/README.md#postrecord)
 resolves as usual and that one file is simply never stored, so fetch the record again when you need to
-know which files it really holds.
+know which files it really holds (after the short wait described above).
 :::
 
 :::danger
@@ -125,6 +132,32 @@ Files are uploaded one after another, and a file storage does not accept does no
 ```
 
 `error.code` is the storage code when storage refused the file (`AccessDenied`, `EntityTooLarge` ...), or `NETWORK_ERROR` (the connection failed), `TIMEOUT` (see below), `ABORTED` (the progress callback's `abort()` was called) or `TOO_MANY_REQUESTS`. `error.cause` holds the raw response, when there was one. `failed` lists the file alone, as it always has; `errors` is where the reason is.
+
+### When the files show on the record
+
+`uploadFiles()` resolves as soon as storage has accepted the files. The record lists them a moment later, usually within 1 to 3 seconds, because storage reports every new file to the database on its own. So a [`getRecords()`](/api-reference/database/README.md#getrecords) call made right after `uploadFiles()` can return the record without the new files.
+
+`bin_endpoints` in the result has the address of every file at once, including the ones in `failed`. When you need the record itself with its new files, read it again until they are listed:
+
+```js
+const countFiles = (rec) => Object.values(rec.bin || {}).reduce((n, files) => n + files.length, 0);
+
+let before = countFiles((await skapi.getRecords({ record_id })).list[0]);
+let result = await skapi.uploadFiles(form, { record_id });
+
+let rec;
+for (let i = 0; i < 10; i++) {
+    rec = (await skapi.getRecords({ record_id })).list[0];
+    if (countFiles(rec) >= before + result.completed.length) {
+        break; // every stored file is listed
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+}
+```
+
+Count the files rather than compare `bin_endpoints` with the `url` of each file in the record: the `url` of a file that is not public, or that is [encrypted](/database/encryption.md#attached-files), is not the same string as its endpoint.
+
+The same wait applies to a `getRecords()` call right after a [`postRecord()`](/api-reference/database/README.md#postrecord) that uploaded files. The record `postRecord()` itself returns already lists them.
 
 ### Many files
 
