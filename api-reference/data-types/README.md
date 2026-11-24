@@ -16,6 +16,8 @@ import type {
     FetchOptions,
     FileInfo,
     Form,
+    ForwardRequestEnvelope,
+    ForwardRequestStatus,
     GetRecordQuery,
     Index,
     Newsletter,
@@ -240,6 +242,52 @@ type FileInfo = {
 ```ts
 type Form<T> = HTMLFormElement | FormData | SubmitEvent | T;
 ```
+
+## ForwardRequestEnvelope
+
+```ts
+type ForwardRequestEnvelope = {
+    id: string; // Request ID in "stamp:entropy" format.
+    status: 'pending' | 'running' | 'resolved' | 'failed' | 'cancelled' | 'missing';
+    body?: any; // The stored result: the destination's answer, or what forwardRequestFinalize() kept.
+    error?: any; // Why it failed.
+    body_unavailable?: boolean; // A result is stored but could not be loaded this time. Read again later.
+    stream?: boolean; // The request was sent with stream: true.
+    chunks?: StreamChunk[]; // Streamed text after `since`, oldest first. Only when `since` was given.
+    last_seq?: number; // The highest chunk sequence stored so far: the next cursor.
+    final_seq?: number; // The last chunk of a streamed request that has settled. A reader whose cursor reached it has all the text.
+    more?: boolean; // More chunks are stored than this read returned: read again from last_seq.
+    created?: number; // When the request was made, in milliseconds.
+    updated?: number; // When it last changed, in milliseconds.
+    executed?: number; // When the server began running it, in milliseconds.
+    responded?: number; // When the destination's response finished arriving, in milliseconds.
+    cref?: string; // The cref the request was sent with.
+}
+```
+
+What [`forwardRequestRead()`](/api-reference/api-bridge/README.md#forwardrequestread) resolves with
+(SDK 2.7.0 or newer). Always this shape, whatever state the request is in.
+
+## ForwardRequestStatus
+
+```ts
+type ForwardRequestStatus = {
+    id: string; // Request ID in "stamp:entropy" format.
+    status: 'pending' | 'running' | 'resolved' | 'failed' | 'cancelled' | 'missing'; // 'missing': this user cannot see such a request (expired, deleted, never sent, or someone else's).
+    queue?: string; // The queue the request is on.
+    stream?: boolean; // The request was sent with stream: true.
+    final_seq?: number; // The last chunk of a streamed request that has settled. How far a running stream has got is in forwardRequestRead()'s last_seq.
+    has_body?: boolean; // A result is stored. Read it with forwardRequestRead().
+    created?: number; // When the request was made, in milliseconds.
+    updated?: number; // When it last changed, in milliseconds.
+    executed?: number; // When the server began running it, in milliseconds.
+    responded?: number; // When the destination's response finished arriving, in milliseconds.
+    cref?: string; // The cref the request was sent with.
+}
+```
+
+One item of what [`forwardRequestStatus()`](/api-reference/api-bridge/README.md#forwardrequeststatus)
+resolves with (SDK 2.7.0 or newer). No bodies.
 
 ## ForwardRequestStreamOptions
 
@@ -550,6 +598,8 @@ type RequestHistory = {
     expires?: number; // timestamp of when the request history will be deleted in epoch time (seconds).
     status: 'pending' | 'running' | 'resolved' | 'failed';
     queue_name?: string; // queue name if the request is in queue, empty string if the request is not in queue.
+    cref?: string; // SDK 2.7.0 or newer. The cref the request was sent with (a forwardRequest() option), when it had one.
+    // A listing fetched with fields: 'ids' has only id, status, created, updated, queue_name and cref (and poll() on a running item).
     // Compact-listing stubs. Present ONLY when the history was fetched with compact: true,
     // in which case request_body/response_body are omitted (the full bodies never leave the
     // server). Re-fetch without compact, or poll the item, when a full body is needed.

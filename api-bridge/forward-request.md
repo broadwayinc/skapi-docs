@@ -179,9 +179,10 @@ When a form carries an `action` attribute, the SDK stores the resolved value and
 
 | code | when |
 |---|---|
-| `INVALID_PARAMETER` | a bad `method`, `multipart` with `data`, `multipart` with no form, a header in the `x-skapi-` namespace, a multipart body over the size cap, a `poll` other than `0` that is under `1000` |
+| `INVALID_PARAMETER` | a bad `method`, `multipart` with `data`, `multipart` with no form, a header in the `x-skapi-` namespace, a multipart body over the size cap, a `poll` other than `0` that is under `1000`, a `cref` that is not 1 to 64 letters, digits, `_` or `-` |
 | `INVALID_REQUEST` | an unknown `secretName`, no access to the named secret, a destination the secret is not allowed to be sent to, a `signal` that was already aborted |
 | `NOT_SUPPORTED` | `multipart: true` in an environment with no `FormData` or `Response` |
+| `NETWORK_ERROR`, `TIMEOUT`, `RATE_LIMITED`, `SERVER_ERROR` | the call did not get through: no network, no answer in time, rate limited, or a fault on skapi's side (SDK 2.7.0 or newer; some of these were bare strings before). The request may or may not have reached the server, so look for it by its [`cref`](/api-bridge/polling-request.md#finding-a-request-whose-reply-was-lost) before sending it again |
 
 A destination that answers with an error of its own is not one of these: that answer is relayed and stored like any other, and is read from the request's status and history.
 

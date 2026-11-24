@@ -27,6 +27,7 @@ forwardRequest(
         onError?: (err: any) => void; // Called when polling or the initial request fails.
         responseType?: 'json' | 'text'; // How the promise resolves with the destination's answer. A skapi status object is handed back untouched either way.
         signal?: AbortSignal; // Aborting stops THIS CLIENT polling the request. The request is already on the server and is NOT cancelled; cancelForwardRequest() is what removes it.
+        cref?: string; // SDK 2.7.0 or newer. Your own reference for this request: 1 to 64 letters, digits, "_" or "-", a new one per request. Stored on the request and handed back by the reply, forwardRequestHistory(), forwardRequestStatus() and forwardRequestRead(), so a send whose reply was lost can be found by it instead of sent again. Anything else is refused with INVALID_PARAMETER.
     }
 ): Promise<any | {
     id: string;           // Request ID in "stamp:entropy" format.
@@ -35,6 +36,7 @@ forwardRequest(
     in_queue: number;     // Unresolved requests in this queue, INCLUDING this one. 1 means this request is at the head (processing next); 2 means one request is ahead of it.
     realtime_group?: string; // Present when the request was made with realtime: true. The room its pieces are pushed to. Keep it beside the ID if you may want to re-attach later: forwardRequestStream() takes it as realtimeGroup, and it cannot be rebuilt from the ID.
     notify?: true; // Present when notify: true was accepted. Absent when the server does not support it yet or nobody is signed in: the poll then runs at its normal interval.
+    cref?: string; // The cref the request was sent with.
     poll?: (arg?: { latency?: number; onStream?: (chunk: string, seq: number, via?: 'socket' | 'poll') => void }) => Promise<any>; // Present when the request was queued. Call to start manual polling. In practice you only receive this object when poll is omitted or 0. See Behavior below.
 }>
 ```
@@ -56,8 +58,11 @@ posting it would send them, files included, with the content type the body actua
 - For non-queued requests (no `queue`), the response is returned directly and `onResponse` is also called with the result.
 - When `poll > 0`, polling starts automatically: `onResponse` is called once with the **final** result, and the promise resolves with that final result, not with the status object. Errors go to `onError`. A queue is auto-generated when no `queue` was given and either `poll > 0` or `stream: true`.
 - When `poll` is `0` or omitted, the promise resolves with the status object plus a `poll()` method. Call `poll()` to start polling; it resolves with the final result and rejects with the error. (The `poll()` on a `forwardRequestHistory()` item also takes `onResponse` and `onError`.)
-- The promise returned by `poll()` also carries a `stop()` method that stops that one poll, even when another poll or `forwardRequestStream()` is reading the same request. See [stopForwardRequestPolling](#stopforwardrequestpolling).
+- The promise returned by `poll()` also carries a `stop()` method that stops that one poll. See [stopForwardRequestPolling](#stopforwardrequestpolling).
+- A request has at most one poll (SDK 2.7.0 or newer): starting `poll()` or `forwardRequestStream()` for a request that already has one stops the old one, which resolves with `{ id, status: 'stopped' }`, and aborts its read in flight.
 - A poll ends when skapi reports the request finished, and resolves with the destination's answer even when that answer has a `status` of its own, such as `'pending'` from an API that starts a job.
+- A read that fails on the way does not end the poll (SDK 2.7.0 or newer): `NETWORK_ERROR`, `TIMEOUT`, `RATE_LIMITED`, `TOO_MANY_REQUESTS`, `SERVER_ERROR` and a token refresh that got no answer are tried again on a later tick, waiting twice as long each time up to 30 seconds. A `401` refreshes the sign-in token once and carries on; with no user signed in the poll waits for a sign in. Only the server's own answer ends it, so a poll rejects (and calls `onError`) only with a refusal, such as `NOT_EXISTS` for a request that is gone. See [When a read fails](/api-bridge/polling-request.md#when-a-read-fails).
+- Polls waiting on the same queue run one at a time, oldest request first.
 - If `onResponse` or `onError` throws, the error is printed to the console and the poll still settles, so the queue behind it keeps moving.
 - `secretName` is optional. When you name one, `$CLIENT_SECRET` is substituted server side in the `url` and in the values of `headers`, `data` and `params` at any depth, and the key's access group authorizes the caller. Nothing is substituted inside a `multipart` body. When `$CLIENT_SECRET` appears nowhere, the SDK leaves `secretName` out and sends the request as written. When you name none, nothing is substituted and no placeholder is required.
 - When the named key has **Destinations** set and `url` does not match one of them, the request is refused with `INVALID_REQUEST` and `Destination is not allowed for this client secret.`, and nothing is sent. A matching request is sent with redirects turned off. A queued request is checked again right before it is sent. See [Restricting Where a Key Can Be Sent](/api-bridge/client-secret-request.md#restricting-where-a-key-can-be-sent).
@@ -178,6 +183,11 @@ the read is registered under the same key a poll is, so
 [stopForwardRequestPolling](#stopforwardrequestpolling) reaches it too. A stopped read resolves with
 `{ id, status: 'stopped' }` and does not call `onResponse`.
 
+Like a poll (SDK 2.7.0 or newer), a request has one reader: this read stops a poll or another read
+of the same request, and a later one stops this. A read that fails on the way is tried again with
+the same waits as a poll, and only the server's answer ends it. See
+[forwardRequest](#forwardrequest) Behavior.
+
 If `onResponse` or `onError` throws, the error is printed to the console and the read still resolves
 (or rejects with the read's own error), so a throwing callback never fails a successful read.
 
@@ -192,10 +202,12 @@ forwardRequestFinalize(
     options?: {
         url?: string;  // The URL the request was sent to. Required unless requestId is a full ID.
         method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'; // The method it was sent with. Required unless requestId is a full ID.
+        ifAbsent?: boolean; // SDK 2.7.0 or newer. Store only when the request has no stored result yet. When it has one, nothing changes and the answer is { finalized: false, reason: 'exists' }.
     }
 ): Promise<{
     finalized: boolean; // false when the request is unknown, has not finished yet, or was never streamed.
     message: string;    // Why, when finalized is false.
+    reason?: string;    // 'exists' when ifAbsent was set and a result was already stored.
 }>
 ```
 
@@ -216,6 +228,9 @@ lists and what a later poll of that request hands back.
 - Only a **finished** request can be finalized. Finalizing a `pending` or `running` one would race
   the server's own settle, so it is refused with `finalized: false`.
 - Finalizing twice simply replaces the kept version, so a call lost to the network can be repeated.
+  With `ifAbsent: true` a second finalize changes nothing: use it when more than one tab or reader
+  may settle the same request, so a reader with only part of the text cannot replace a complete
+  answer another one kept.
 - Storing a result is what **deletes** the chunks. After this, `forwardRequestStream()` on the
   same request returns the stored body and streams nothing.
 
@@ -233,6 +248,11 @@ forwardRequestHistory(
         compact?: boolean; // Return lightweight label stubs instead of full request/response bodies. See below.
         queue_exact?: boolean; // Match the named queue exactly instead of as a prefix. See below.
         queue_exclude?: string; // Drop one queue's rows from the listing. See below.
+        fields?: 'ids'; // SDK 2.7.0 or newer. A light listing: each item is only id, status, created, updated, queue_name and cref, with no bodies. See below.
+        after?: string; // SDK 2.7.0 or newer. Only requests newer than this request ID ("stamp:entropy").
+        deadline?: number; // SDK 2.7.0 or newer. Milliseconds the listing may take in all; past it, it fails with TIMEOUT.
+        fresh?: boolean; // SDK 2.7.0 or newer. Do not join an identical listing already on its way.
+        signal?: AbortSignal; // SDK 2.7.0 or newer. Aborting fails the listing with ABORTED.
     },
     fetchOptions?: FetchOptions // Pagination and fetch behavior options.
 ): Promise<DatabaseResponse<RequestHistory[]>>
@@ -257,13 +277,99 @@ Listing modifiers:
   actually needed.
 - `queue_exact: true` restricts a `queue` listing to exactly the named queue. Without it
   the queue lookup is a prefix range, so queue `"u1"` also matches `"u1-bg"` and every
-  other queue that starts with `"u1"`.
+  other queue that starts with `"u1"`. The server reads only the named queue's rows.
+  Requests queued before 2026-06-05 were stored under an older queue format and are not
+  listed with `queue_exact`; list the queue without it to see those.
 - `queue_exclude: "<name>"` drops one queue's rows from the listing: the inverse filter,
   for fetching everything except a background queue.
+- `fields: "ids"` returns each item with only `id`, `status`, `created`, `updated`,
+  `queue_name` and `cref`, so a page stays small however large the requests are. A running
+  or pending item still has `poll()`.
+- `after: "<request id>"` returns only requests newer than that one: what has appeared since
+  the newest request you already know.
 
-Both queue filters are applied server-side after the range read, so a page can come back
-short (or even empty) while more matches remain. Rely on `endOfList`/`startKey` to keep
-paging, never on a page's length.
+A `queue` listing returns only the caller's own requests: rows another user queued under the
+same queue name are left out.
+
+`queue_exclude` and that filter are applied server-side after the read, so a page can come back short (or
+even empty) while more requests remain. Rely on `endOfList`/`startKey` to keep paging, never
+on a page's length.
+
+## forwardRequestStatus
+
+```ts
+forwardRequestStatus(
+    requests: (string | { id: string; url?: string; method?: string })[], // Full request IDs, or { id, url, method } with the short "stamp:entropy" ID.
+    opts?: {
+        deadline?: number; // Milliseconds each call may take in all (a token refresh and the wait in the queue included); past it, it fails with TIMEOUT.
+        fresh?: boolean;   // Default true: never join an identical read already on its way.
+        signal?: AbortSignal; // Aborting fails the call with ABORTED.
+        service?: string;
+        owner?: string;
+    }
+): Promise<{
+    list: ForwardRequestStatus[]; // In the order asked.
+}>
+```
+
+SDK 2.7.0 or newer. Reads where many requests stand: status, stream position, whether a result is
+stored, timestamps and `cref`, without any bodies. The read is strongly consistent, so a request
+that just changed shows its new status. Up to 100 requests go in one call to the server; more are
+sent 100 at a time, one call after another. A request this user cannot see (expired, deleted, never
+sent, or someone else's) comes back with `status: 'missing'` instead of failing the call. An empty
+list resolves with `{ list: [] }` and sends nothing. A short ID without `url` and `method` is
+refused with `INVALID_PARAMETER`.
+
+See [ForwardRequestStatus](/api-reference/data-types/README.md#forwardrequeststatus) and
+[Reading many requests at once](/api-bridge/polling-request.md#reading-many-requests-at-once).
+
+## forwardRequestQueueCounters
+
+```ts
+forwardRequestQueueCounters(
+    queues: string[], // 1 to 20 queue names.
+    opts?: { service?: string; owner?: string; deadline?: number; fresh?: boolean; signal?: AbortSignal }
+): Promise<{
+    queues: { [name: string]: {
+        cnt: number;      // Requests on the queue that still exist.
+        rct: number;      // Of those, the ones that have finished. Grows whenever one finishes.
+        seq: number;      // Requests ever added to the queue. Grows whenever one is added.
+        in_queue: number; // cnt - rct: unfinished requests.
+    } }
+}>
+```
+
+SDK 2.7.0 or newer. A few bytes per queue, so it can be read often: read the requests themselves
+(`forwardRequestStatus()`) only when `rct` or `seq` moved. A queue that never had a request is left
+out. `deadline`, `fresh` (default true) and `signal` work as for `forwardRequestStatus()`.
+
+## forwardRequestRead
+
+```ts
+forwardRequestRead(
+    params: {
+        id: string; // The request ID ("stamp:entropy") with url and method, or a full ID alone.
+        url?: string;
+        method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD';
+        since?: number; // A chunk sequence number (0 for the beginning): also return a streamed request's text after it.
+        deadline?: number; // Milliseconds the read may take in all; past it, it fails with TIMEOUT.
+        fresh?: boolean;   // Default true: never join an identical read already on its way.
+        signal?: AbortSignal; // Aborting fails the read with ABORTED.
+        service?: string;
+        owner?: string;
+    }
+): Promise<ForwardRequestEnvelope>
+```
+
+SDK 2.7.0 or newer. Reads one request in full and always answers in the same shape,
+`{ id, status, body?, error?, chunks?, last_seq?, final_seq?, more?, ... }`: a resolved request does
+not come back as its bare body the way a poll hands it back, so the status is always there. With
+`since`, a streamed request's text after that point comes back in `chunks` (resolved or failed: the
+text a failed stream got before it failed is included), with `more: true` when there is more than
+one read returns. A result that is stored but could not be loaded this time comes back as
+`body_unavailable: true` instead of failing the read.
+
+See [ForwardRequestEnvelope](/api-reference/data-types/README.md#forwardrequestenvelope).
 
 ## cancelForwardRequest
 
@@ -310,6 +416,7 @@ arguments at all to stop every live poll.
 - `onResponse` and `onError` are **not** called for a stopped poll; a stop is not a result.
 - Stopping a request that is still waiting in a queue also removes it from that queue, freeing the slot
   for the next request.
+- A read the poll has on its way is aborted (SDK 2.7.0 or newer).
 - Stopping an unknown or already-finished request is a no-op and returns `0`.
 
 To cancel the request itself rather than just stop watching it, use

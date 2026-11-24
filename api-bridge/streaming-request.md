@@ -246,8 +246,9 @@ forwardRequestFinalize(
     options?: {
         url?: string; // Required unless requestId is a full id.
         method?: 'GET' | 'POST' | 'DELETE' | 'PUT'; // Required unless requestId is a full id.
+        ifAbsent?: boolean; // SDK 2.7.0 or newer. Store only when no result is stored yet.
     }
-): Promise<{ finalized: boolean; message: string }>
+): Promise<{ finalized: boolean; message: string; reason?: string }>
 ```
 
 What you send becomes that request's stored result: the value [`forwardRequestHistory()`](/api-reference/api-bridge/README.md#forwardrequesthistory) lists as `response_body`, and the value a later poll of the same request hands back. The content is entirely yours. Skapi does not validate it, parse it, or interpret it: text you assembled from the chunks, a rebuilt response object, a summary, a single word, anything at all. It is stored as given and returned as given. Calling it with **no** `data` is not a no-op: it keeps `null` as the request's result and still releases the chunks, which destroys the relayed text. Pass what you actually want kept.
@@ -261,7 +262,9 @@ The one exception is `expires`. A request sent with it is removed when its histo
 
 :::
 
-Finalizing twice simply replaces the kept version, so a call lost to the network can be repeated. `finalized: false` comes back with a message rather than an error in these cases:
+Finalizing twice simply replaces the kept version, so a call lost to the network can be repeated. When more than one tab or reader may settle the same request, pass `ifAbsent: true` (SDK 2.7.0 or newer): the result is stored only when none is stored yet, and otherwise nothing changes and the answer is `{ finalized: false, reason: 'exists' }`, so a reader holding only part of the text can never replace a complete answer another one kept.
+
+`finalized: false` comes back with a message rather than an error in these cases:
 
 | message | meaning |
 |---|---|

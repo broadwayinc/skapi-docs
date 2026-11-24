@@ -1,6 +1,32 @@
 # Version History
 
-### Current version: 2.6.0
+### Current version: 2.7.0
+
+**2.7.0**
+
+New:
+
+- **`forwardRequestStatus(requests, opts?)`** reads where many forwarded requests stand in one call (up to 100 per call to the server, more are sent 100 at a time): status, stream position (`last_seq`, `final_seq`), whether a result is stored (`has_body`), timestamps and `cref`, with no bodies. A request this user cannot see comes back as `status: 'missing'` instead of failing the call. See [Reading many requests at once](/api-bridge/polling-request.md#reading-many-requests-at-once).
+- **`forwardRequestRead({ id, url, method, since })`** reads one request and always answers `{ id, status, body?, error?, chunks?, ... }`, so the status is there even for a resolved request, and a failed stream comes back with the text it got before it failed. See [forwardRequestRead](/api-reference/api-bridge/README.md#forwardrequestread).
+- **`forwardRequestQueueCounters(queues, opts?)`** reads the counters of up to 20 queues (`cnt`, `rct`, `seq`, `in_queue`), a few bytes each, so a page can check often and read the requests themselves only when a counter moved. See [Reading many requests at once](/api-bridge/polling-request.md#reading-many-requests-at-once).
+- **`cref` on `forwardRequest()`** (and the deprecated `clientSecretRequest()`): your own reference for the request, stored on it and handed back by the reply, `forwardRequestHistory()`, `forwardRequestStatus()` and `forwardRequestRead()`, so a send whose reply was lost can be found instead of sent twice. See [Finding a request whose reply was lost](/api-bridge/polling-request.md#finding-a-request-whose-reply-was-lost).
+- **`forwardRequestHistory()`** takes `fields: 'ids'` (only id, status, times, queue and `cref`, no bodies) and `after: '<request id>'` (only newer requests). See [Light Listings](/api-bridge/request-history.md#light-listings).
+- **`forwardRequestFinalize(id, data, { ifAbsent: true })`** stores the result only when none is stored yet, and otherwise answers `{ finalized: false, reason: 'exists' }`, so two tabs cannot replace a complete answer with a partial one.
+- **`deadline`, `fresh` and `signal` on the reads.** `forwardRequestStatus()`, `forwardRequestRead()` and `forwardRequestHistory()` take `deadline` (milliseconds the call may take in all, then `TIMEOUT`), `fresh` (do not join an identical read already on its way; the default for the two new reads) and `signal` (an `AbortSignal`; aborting fails the call with `ABORTED`).
+
+Fixes and changes:
+
+- **A poll ends only with the server's answer.** A poll read that failed on the way (no network, `TIMEOUT`, a `429`, a server fault, a token refresh that got no answer) used to end the poll with that error at once, so a laptop waking from sleep turned requests that were still running into errors. Such a read is now tried again on a later tick, waiting twice as long each time up to 30 seconds. A `401` refreshes the sign-in token once and the poll carries on; with no user signed in the poll waits for a sign in. A refusal from the server still ends it, and a request that no longer exists ends it with `NOT_EXISTS`. `forwardRequestStream()` follows the same rules. See [When a read fails](/api-bridge/polling-request.md#when-a-read-fails).
+- **One poll per request.** Starting `poll()` or `forwardRequestStream()` for a request that already has one stops the old one (it resolves with `{ id, status: 'stopped' }`) instead of running both. See [One poll per request](/api-bridge/polling-request.md#one-poll-per-request).
+- **Stopping a poll aborts its read in flight**, so a stopped poll holds no connection and no place in the request queue.
+- **Polls waiting on one queue go oldest request first**, the order the server runs them in, even when they were started newest first. A poll already reading when an older request's poll joins its queue steps aside until that one is done, then goes on where it left off.
+- **A status push wakes a poll still waiting its turn.** With `notify: true`, a status change of a request whose poll was waiting behind another poll of the same queue used to be ignored until that poll got its turn. The poll now reads the request at once, and settles if it is done.
+- **`skapi.util.terminatePendingRequests()` fails the requests it drops.** Requests still waiting their turn used to be dropped without an answer, so code awaiting one (a poll's read, for example) waited forever. They now fail with `ABORTED`, and a poll tries again on its next read (after a sign in when it needs one). Requests already sent keep going. See [Terminating Pending Requests](/util/introduction.md#terminating-pending-requests).
+- **Poll timing no longer follows the computer's clock.** A clock set back (by a time sync or by hand) used to pause polls and their retries until the clock caught up again.
+- **`queue_exact` reads only the named queue on the server.** Requests queued before 2026-06-05 were stored under an older queue format and are not listed with `queue_exact: true`; list the queue without it to see those. Pages of a `queue_exact` listing are no longer short because of other queues; `queue_exclude` pages still can be. See [Exact Queue Matching](/api-bridge/request-history.md#exact-queue-matching).
+- **A `queue` listing returns only your own requests** (on the server, for every SDK version). `forwardRequestHistory({ queue })` used to return every user's requests on a queue of that name; requests another user queued under the same name are now left out. See [Filtering by Queue](/api-bridge/request-history.md#filtering-by-queue).
+- **Transport failures are `SkapiError`s with a code.** A request that got no answer fails with `NETWORK_ERROR` (was the string `'Network error'`), a `429` without `Retry-After` with `RATE_LIMITED` (was `'Too many requests'`), an aborted one with `ABORTED` (was `'Aborted'`), and a `5xx` answer (except `501`) with `SERVER_ERROR` (was the status number as the code, or the code in the body). The messages are the same words as before. A `429` that is still answered after its retries keeps `TOO_MANY_REQUESTS`.
+- **A sign-in token refresh that does not answer within 15 seconds fails the request with `TIMEOUT`.** It used to wait as long as the connection stayed open, holding every request of the page that needed a token. The user stays signed in, and the next request tries the refresh again.
 
 **2.6.0**
 

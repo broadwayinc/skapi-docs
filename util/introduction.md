@@ -143,12 +143,12 @@ skapi.util.request(
 
 ## Terminating Pending Requests
 
-Skapi can terminate pending requests. By default, Skapi processes requests in batches. You can configure the batch size in [Advanced Settings](/introduction/advanced-settings.html).
+Skapi can terminate pending requests. Skapi runs at most `requestBatchSize` requests at once, and the rest wait their turn. You can configure the batch size in [Advanced Settings](/introduction/advanced-settings.html).
 
-Calling `skapi.util.terminatePendingRequests()` terminates all queued requests.
+Calling `skapi.util.terminatePendingRequests()` terminates all requests still waiting their turn. Each one fails with an `SkapiError` with code `ABORTED` (SDK 2.7.0 or newer; before, they were dropped without an answer and code awaiting them waited forever). Requests already sent keep going.
 
 ```js
-skapi.util.terminatePendingRequests(); // All pending requests are terminated
+skapi.util.terminatePendingRequests(); // All waiting requests fail with code ABORTED
 ```
 
 ## MD5 Hasher

@@ -85,6 +85,9 @@ A bare `queue` lookup is a prefix range: `queue: 'image'` also returns requests 
 `queue_exact: true` when you want only the named queue.
 :::
 
+A queue listing returns only your own requests. Another user's requests on a queue with the
+same name are never listed, so naming another user's queue returns nothing of theirs.
+
 ## Exact Queue Matching
 
 `queue_exact: true` restricts the listing to exactly the named queue:
@@ -98,11 +101,19 @@ skapi.forwardRequestHistory({
 });
 ```
 
+The server reads only the rows of the named queue, so other queues that start with the
+same name cost nothing.
+
+::: warning Requests queued before 2026-06-05
+Requests queued before 2026-06-05 were stored under an older queue format, and
+`queue_exact: true` does not list them. To see those, list the queue without `queue_exact`.
+:::
+
 The inverse also exists: `queue_exclude: '<name>'` drops one queue's rows from a listing,
 which is how you fetch everything *except* a background queue.
 
-Both filters are applied server-side after the range read, so a page can come back short
-(or even empty) while more matches remain. Keep paging by `startKey`/`endOfList` as usual;
+`queue_exclude` is applied server-side after the read, so a page can come back short
+(or even empty) while more requests remain. Keep paging by `startKey`/`endOfList` as usual;
 never treat a short page as the end of the list.
 
 ## Compact Listings
@@ -132,6 +143,28 @@ Each item carries lightweight stubs **instead of** the full `request_body` and
 fraction of the bandwidth. `request_text` can be missing when a request body's shape has
 no recognizable user message. When you do need a full body, re-fetch that listing without
 `compact`, or `poll()` a still-running item, which always resolves with the full result.
+
+## Light Listings
+
+`fields: 'ids'` (SDK 2.7.0 or newer) lists each request with only its `id`, `status`,
+`created`, `updated`, `queue_name` and [`cref`](/api-bridge/polling-request.md#finding-a-request-whose-reply-was-lost),
+with no bodies at all. Use it to find out which requests exist and where they stand.
+`after: '<request id>'` lists only the requests newer than one you already know:
+
+```js
+const fresh = await skapi.forwardRequestHistory({
+    url: 'https://api.openai.com/v1/images/generations',
+    method: 'POST',
+    queue: 'image-queue',
+    fields: 'ids',
+    after: newestKnownId,
+    deadline: 15000 // fail with TIMEOUT after 15 seconds
+});
+```
+
+A listing also takes `deadline` (milliseconds in all, then `TIMEOUT`), `fresh: true` (do not
+join an identical listing already on its way) and `signal` (an `AbortSignal`; aborting fails it
+with `ABORTED`).
 
 For full parameter details, see the API reference:
 
