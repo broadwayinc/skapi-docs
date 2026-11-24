@@ -43,6 +43,9 @@ postRecord(
             prevent_multiple_referencing?: boolean; // If true, a single user can reference this record only once.
             only_granted_can_reference?: boolean; // When true, only the user who has granted private access to the record can reference this record.
             can_remove_referencing_records?: boolean; // When true, owner of the record can remove any record that are referencing this record. Also when this record is deleted, all the record referencing this record will be deleted.
+            /** SDK 2.6.0 or newer. When true, owner of the record can change the data, tags and index of any record that references it, or unlink it with reference: null. Nothing else. Default: false. */
+            /** Only the uploader can set it, and only when the record is created. On an update it can be turned off, but only the project owner and admins in access group 99 can turn it on. See [Letting the referenced record's owner modify referencing records](/database/referencing.md#letting-the-referenced-record-s-owner-modify-referencing-records) */
+            can_modify_referencing_records?: boolean;
             referencing_index_restrictions?: {
                 name: string; // 1..256 characters, where / ! * # % each count as 3. Blocks control chars and sentinel U+10FFFF, and cannot start with '$'.
                 value?: string | number | boolean; // String value: 0..256 chars. Blocks control chars and sentinel U+10FFFF only.
@@ -51,7 +54,7 @@ postRecord(
             }[] | null;
             allow_granted_to_grant_others?: boolean; // When true, the user who has granted private access to the record can grant access to other users.
         };
-        reference?: string; // Reference to another record. When value is given, it will reference the record with the given value. Can be record ID or unique ID.
+        reference?: string | null; // Reference to another record. When value is given, it will reference the record with the given value. Can be record ID or unique ID. null removes the reference when updating.
         remove_bin?: BinaryFile[] | string[] | null; // If the BinaryFile object or the url of the file is given, it will remove the bin data(files) from the record. The file should be uploaded to this record. If null is given, it will remove all the bin data(files) from the record. (not available to anonymous users)
         progress?: ProgressCallback; // Progress callback function. Useful when uploading files.
     },
@@ -139,6 +142,36 @@ See [BinaryFile](/api-reference/data-types/README.md#binaryfile)
     code: "INVALID_REQUEST";
     // Only the project owner and admins in access group 99 can update a read-only record.
     message: "Record is read only.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // The uploader of a record with source.can_modify_referencing_records updating a record of
+    // another user that references it can change only data, tags and index, or set reference
+    // to null. {field} names the first field that differs from the stored record, for example
+    // table.name, table.access_group, table.subscription.<key>, readonly, unique_id, reference,
+    // remove_bin or source.<key>.
+    // See /database/referencing.md#letting-the-referenced-record-s-owner-modify-referencing-records
+    message: "The referenced record's user can only change the data, tags and index of a record that references theirs, or unlink it ({field} differs).";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // The same right never covers a private record.
+    message: "The referenced record's user cannot update a private record.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // The record that the referenced record's user updates is in an access group above their own.
+    message: "User has no access to this group.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // source.can_modify_referencing_records set to true on an existing record that has it off.
+    // Turning it off is always allowed.
+    message: '"source.can_modify_referencing_records" can only be set when the record is created. Only the project owner and admins in access group 99 can turn it on for an existing record.';
 }
 |
 {

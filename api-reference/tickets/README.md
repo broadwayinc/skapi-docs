@@ -290,7 +290,7 @@ type TicketAction =
         retry?: boolean;
     }
     | {
-        act: 'pstr'; // Post a record. Everything except user_id, condition and actions is the postRecord() payload. Any other key (notification, remove_bin, reference_private_key, progress) is refused at registration. Answers the record (RecordData).
+        act: 'pstr'; // Post a record. Everything except user_id, condition and actions is the postRecord() payload. Any other key (notification, remove_bin, reference_private_key, progress) is refused at registration. Answers the record (RecordData), with updated_by?: string, the user who last updated it when that was not its uploader. Its ip carries the address only when the action posts as the record's uploader, as the project owner (no user_id) or as an admin in access group 99, else '' or '0.0.0.0' for a signed-out uploader.
         exe: {
             table: string | { // A plain name is { name } in the public group.
                 name: string;
@@ -314,6 +314,7 @@ type TicketAction =
                 referencing_limit?: number; // Default: null (Infinite)
                 prevent_multiple_referencing?: boolean; // If true, a single user can reference this record only once.
                 can_remove_referencing_records?: boolean; // When true, owner of the record can remove any record that are referencing this record. Also when this record is deleted, all the record referencing this record will be deleted.
+                can_modify_referencing_records?: boolean; // When true, owner of the record can change the data, tags and index of any record that references it, or unlink it. Set it when the record is created.
                 only_granted_can_reference?: boolean; // When true, only the user who has granted private access to the record can reference this record.
                 /** Index restrictions for referencing records. null removes all restrictions. */
                 referencing_index_restrictions?: {

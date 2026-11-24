@@ -476,6 +476,7 @@ type RecordData = {
         referencing_limit: number; // Default: null (Infinite)
         prevent_multiple_referencing: boolean; // If true, a single user can reference this record only once.
         can_remove_referencing_records: boolean; // When true, owner of the record can remove any record that are referencing this record. Also when this record is deleted, all the record referencing this record will be deleted.
+        can_modify_referencing_records: boolean; // SDK 2.6.0 or newer. When true, owner of the record can change the data, tags and index of any record that references it, or unlink it with reference: null.
         only_granted_can_reference: boolean; // When true, only the user who has granted private access to the record can reference this record.
         referencing_index_restrictions?: {
             name: string; // Allowed index name
@@ -518,8 +519,14 @@ type RecordData = {
     };
     tags?: string[];
     bin: { [key: string]: BinaryFile[] };
+    /** The uploader's IP address. Returned only to the record's uploader, the project owner and admins in access group 99.
+     *  For anyone else it is an empty string, or '0.0.0.0' for a record a signed-out user posted from an IPv4 address (user_id 'anonymous:...'). */
     ip: string;
     readonly: boolean;
+    /** SDK 2.6.0 or newer. User ID of the user who last updated the record when that was not its uploader: the owner of the
+     *  referenced record through source.can_modify_referencing_records, the project owner or an admin.
+     *  Absent when the uploader made the last update. See /database/referencing.md#who-changed-a-record-updated-by */
+    updated_by?: string;
     /** Present ONLY on an element of a bulkPostRecords() result that the API refused.
      *  Such an element is an empty record (record_id is ""), and this carries the reason,
      *  e.g. { code: 'NOT_EXISTS', message: 'Record of "reference.unique_id": "src::report.xlsx" does not exists.' }.
