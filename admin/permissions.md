@@ -227,7 +227,7 @@ Admins (access groups `90` ~ `99`) and the project owner:
 
 - Query records in **every** access group, including access group `99`, the group named `admin`.
 - Read [subscription](/database/subscription.md) records and their files without subscribing to anyone.
-- Upload records to any access group, including one higher than their own. Anyone else is refused with `User has no access to this group.`
+- Upload records to any access group, including one higher than their own. Anyone else is refused with `User has no access to this group.`, unless the record references a record they were granted private access to and stays at or below that record's access group (see [Access Restrictions](/database/access-restrictions.md)).
 - See the private and admin record counters in [table information](/database/table-info.md#querying-tables), which other users do not get.
 
 Private records are the exception, and they are covered on their own below.
@@ -293,6 +293,7 @@ What admins **can** do on a private record:
 
 - **Delete** it. [`deleteRecords()`](/database/delete-records.md) reaches any record in the project.
 - **Remove private access** from a user with [`removePrivateRecordAccess()`](/database/access-restrictions.md#remove-private-access), on any record of the project, not only their own.
+- **List private access grants** with [`listPrivateRecordAccess()`](/database/access-restrictions.md#listing-private-access-grants), of any record or any user, when they are the project owner or in access group `99`. Admins in access groups `90` ~ `98` list only where they have access to the data, like any other user.
 
 Granting private access stays with the record's user, and with the users that user allowed to grant others. Private access can never be granted to the project owner: `Private access cannot be granted to service owners.`
 
@@ -472,6 +473,7 @@ Every message below is the exact text the server returns, and every code is the 
 | Code | Message | Returned by |
 | --- | --- | --- |
 | `INVALID_REQUEST` | `User has no access to this group.` | `postRecord()` uploading above your own access group |
+| `INVALID_REQUEST` | `User has no access to this group. A record above your access group must reference a record you were granted, and stay at or below that record's access group.` / `User has no access to this group. A private record lends no access group: a record that references it can be at most your own access group, or private.` | `postRecord()` uploading above your own access group with a reference to a record you were not granted, to a private record, or above that record's access group |
 | `INVALID_REQUEST` | `No access to the record.` | `getRecords()` fetching one record by `record_id` that is in a higher access group than the caller's own, admins in access groups `90` ~ `98` included |
 | `INVALID_REQUEST` | `User has no private access.` | `getRecords()` fetching one private record by `record_id`, from an account without private access to it, admins in access groups `90` ~ `98` included |
 | `INVALID_REQUEST` | `User has no access to update this record.` | `postRecord()` on another user's record, from an account that is not an admin |
@@ -486,6 +488,7 @@ Every message below is the exact text the server returns, and every code is the 
 | `INVALID_REQUEST` | `The record should be owned by the user.` | `deleteFiles()` from an account that is not an admin |
 | `INVALID_REQUEST` | `Only the owner of a private record can delete its files.` | `deleteFiles()` on a private record |
 | `INVALID_REQUEST` | `Record should be owned by the user.` | `removePrivateRecordAccess()` from an account that is not an admin |
+| `INVALID_REQUEST` | `User has no access to list the private access of this record.` / `User has no access to list the private access of this user.` | `listPrivateRecordAccess()` from an account without access to the record, or naming another user without `record_id`, admins in access groups `90` ~ `98` included |
 | `INVALID_REQUEST` | `Private access cannot be granted to service owners.` | `grantPrivateRecordAccess()` naming the project owner |
 | `INVALID_REQUEST` | `Database is frozen. Write access is denied for this user.` | `postRecord()`, `uploadFiles()`, `deleteFiles()` while the database is frozen |
 | `INVALID_REQUEST` | `Database is frozen. Delete access is denied for this user.` | `deleteRecords()` while the database is frozen |

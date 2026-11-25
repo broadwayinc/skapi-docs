@@ -187,7 +187,7 @@ A payment webhook saving the order as a record of the buyer, under a unique ID b
   "exe": {
     "table": {
       "name": "orders",
-      "access_group": "admin"
+      "access_group": "authorized"
     },
     "unique_id": "order-${body[payment][id]}",
     "index": {
@@ -213,6 +213,7 @@ A `unique_id` makes a retried webhook **update** the same record instead of dupl
 - **With `user_id`**, that user posts it and the record is theirs. Write `${user[user_id]}` for the consumer of a `consumeTicket()` call with `auth: true` (see [User](/tickets/conditions.md#user)), or a placeholder a condition row captured, such as `${placeholder[BUYER]}`. Once its references are filled in, the value must be:
   - a user ID, which is a UUID such as `8f3a2c1e-4b5d-4e6f-9a7b-1c2d3e4f5a6b`. Anything else, an empty value included, fails with `ACTION_FAILED`, code `INVALID_PARAMETER` and `Post as user ("user_id") is not a valid user ID (UUID).`
   - not the project owner's own ID, which fails with `Post as user cannot be the project owner. Leave it empty to post as the project owner.`
+  - The post follows that user's access group, as their own `postRecord()` would: a record above it fails with `User has no access to this group.`, unless it references a record the user was granted and stays at or below that record's access group (see [Access Restrictions](/database/access-restrictions.md)). To keep a record out of the user's reach, post it without `user_id`.
   - a user of this project who is active, otherwise the action fails with `User does not exist.` or `User is not active.`
 
 Any other refusal of the post fails the action with `ACTION_FAILED`, with the operation's `code` and `message` in `detail`.
@@ -236,7 +237,7 @@ For the example above, the Then chain reads this as `${response}`, and a Check a
   "user_id": "5b0f9c2e-7d31-4a8e-9f6b-2c4d1e8a7b30",
   "table": {
     "name": "orders",
-    "access_group": "admin",
+    "access_group": "authorized",
     "subscription": {
       "is_subscription_record": false,
       "upload_to_feed": false,

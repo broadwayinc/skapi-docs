@@ -2,6 +2,13 @@
 
 ### Current version: 2.7.0
 
+**Server changes of 2026-11-25, for every SDK version**
+
+- **A record above your access group needs a grant.** A record may sit in an access group above its user's own only when it references a record the user was granted with `grantPrivateRecordAccess`, and at most at that record's access group. Being able to read the referenced record, or having uploaded it, is no longer enough: a reference to a public record used to let any signed-in user post into any access group. Refused with `User has no access to this group. A record above your access group must reference a record you were granted, and stay at or below that record's access group.`, or `User has no access to this group. A private record lends no access group: a record that references it can be at most your own access group, or private.` when the referenced record is private. The same check runs on an update that keeps such a record's reference. Admins and the project owner are not checked. See [Access Restrictions](/database/access-restrictions.md).
+- **Private access keys through a reference check the link.** A key asked for with a reference is given only when the private record references that record directly, and you uploaded it or were granted it (a grant on the private record itself is enough too). Before, any record of your own could be named, which gave a key to any private record. See [Access Restrictions](/database/access-restrictions.md).
+- **Listing private access grants needs access to the data.** A record's grants are listed only for its uploader, the users it was shared with, the users with private access to the record it references, the project owner and admins in access group `99`; a user's grants only for that user, the project owner and admins in access group `99`. Anyone else gets `User has no access to list the private access of this record.` (or `of this user.`). See [Listing Private Access Grants](/database/access-restrictions.md#listing-private-access-grants).
+- **A record read through the record it references comes with a key for its own files.** It used to come with the referenced record's key, so its files failed to load for up to an hour.
+
 **2.7.0**
 
 New:

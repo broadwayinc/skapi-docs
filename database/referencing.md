@@ -64,10 +64,12 @@ skapi.getRecords({
 :::tip
 A user cannot reference a record with a higher access group or 'private' access.
 However, if the uploader has granted the private access of the record to the user, the user will be able to reference it.
+
+A record that references another record can be uploaded in an access group above the user's own only when the user was granted private access to the referenced record, and only up to the referenced record's access group. A private referenced record lets no record above the user's own access group. See [Access Restrictions](/database/access-restrictions.md).
 :::
 
 :::danger
-Users who have private access granted to a record will also have access to all other private/higher access group records that is referenced.
+Users who have private access granted to a record will also have access to the private and higher access group records that reference it directly. This goes one level only: records that reference those records are not opened by it.
 To avoid unintended sharing of private records, do not permit users to upload a private record that references another record.
 :::
 

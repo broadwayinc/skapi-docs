@@ -762,7 +762,7 @@
             "get": {
                 "tags": ["Access Control"],
                 "summary": "listPrivateRecordAccess(params, fetchOptions?)",
-                "description": "List users with access to private record.\n\n```javascript\nskapi.listPrivateRecordAccess({record_id: 'record_id'});\n```",
+                "description": "List users with access to private record. Only users with access to the data can list: the record's uploader, the users it was shared with, the users with private access to the record it references, the project owner and admins in access group 99; with user_id alone, only that user, the project owner and admins in access group 99. Anyone else gets INVALID_REQUEST.\n\n```javascript\nskapi.listPrivateRecordAccess({record_id: 'record_id'});\n```",
                 "operationId": "listPrivateRecordAccess",
                 "responses": {
                     "200": {

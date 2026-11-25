@@ -25,7 +25,9 @@ The user profile's access group is set by the project owner, and by admins with 
 :::
 
 ::: tip
-Unless the user is referencing a private access granted record, the user cannot upload a record with `access_group` set to a higher level than their own access level. Admins and the project owner can.
+A user cannot upload a record with `access_group` set to a higher level than their own access level, unless the record references a record the user was granted private access to with [`grantPrivateRecordAccess()`](/api-reference/database/README.md#grantprivateaccess). Even then the record can go no higher than the referenced record's own access group. Being able to read the referenced record, or having uploaded it, is not enough: a reference to a `public` record lets no record above the user's own access group, and neither does a reference to a private record. Admins and the project owner can upload to any access group.
+
+A record above the user's access group with no reference is refused with `User has no access to this group.`, and one whose reference does not qualify with `User has no access to this group. A record above your access group must reference a record you were granted, and stay at or below that record's access group.` (or, when the referenced record is private, `User has no access to this group. A private record lends no access group: a record that references it can be at most your own access group, or private.`) The same check runs on every update of such a record, also when the update does not send `reference` again: once the user holds no grant on the referenced record, they can update the record only by moving it to an access group up to their own.
 
 You can read more about [referencing records](/database/referencing.md).
 :::
@@ -169,6 +171,8 @@ You can read more about [referencing records](/database/referencing.md).
 ### Private access keys
 
 To read a private record or its files, the granted user's skapi-js holds a **private access key** for that record. The server hands one out when the user reads the record, and `getFile()` requests one for the record's files. The server checks the key without a database lookup, which keeps reads fast.
+
+A user whose access to a private record comes from the record it references gets the key through that reference: the server gives it only when the private record references that record directly (one level, as in [Private Records](#private-records)), and the user uploaded that record or was granted private access to it. A grant on the private record itself is enough too.
 
 A private access key is valid for **1 hour**. skapi-js renews it on its own: a key that has expired, or will within a minute, is replaced with a fresh one the next time it is needed. You do not need to handle keys yourself.
 
@@ -334,4 +338,19 @@ skapi.listPrivateRecordAccess({
     //   ...
     // }
 })
+```
+
+Only users with access to the data can list. With `record_id`, the list is open to the record's uploader, the users it was shared with, the users with private access to the record it references (they uploaded that record or it was shared with them), and the project owner and admins in access group `99`. With `user_id` alone, it is open to that user, the project owner and admins in access group `99`. A user can always list their own grants. Anyone else, admins in access groups `90` ~ `98` included, is refused with the error below, which does not say whether the record exists:
+
+```ts
+{
+    code: "INVALID_REQUEST";
+    message: "User has no access to list the private access of this record.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // user_id without record_id, naming another user
+    message: "User has no access to list the private access of this user.";
+}
 ```

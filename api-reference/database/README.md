@@ -54,7 +54,7 @@ postRecord(
             }[] | null;
             allow_granted_to_grant_others?: boolean; // When true, the user who has granted private access to the record can grant access to other users.
         };
-        reference?: string | null; // Reference to another record. When value is given, it will reference the record with the given value. Can be record ID or unique ID. null removes the reference when updating.
+        reference?: string | null; // Reference to another record. When value is given, it will reference the record with the given value. Can be record ID or unique ID. null removes the reference when updating. A record in an access group above the user's own must reference a record the user was granted private access to, and stay at or below that record's access group (admins and the project owner excepted). See [Access Restrictions](/database/access-restrictions.md)
         remove_bin?: BinaryFile[] | string[] | null; // If the BinaryFile object or the url of the file is given, it will remove the bin data(files) from the record. The file should be uploaded to this record. If null is given, it will remove all the bin data(files) from the record. (not available to anonymous users)
         progress?: ProgressCallback; // Progress callback function. Useful when uploading files.
     },
@@ -165,6 +165,22 @@ See [BinaryFile](/api-reference/data-types/README.md#binaryfile)
     code: "INVALID_REQUEST";
     // The record that the referenced record's user updates is in an access group above their own.
     message: "User has no access to this group.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // A record in an access group above the user's own that references a record the user was not
+    // granted private access to (their own record does not count), or a record in a lower access
+    // group than the new record's. Also on an update that keeps such a record's reference.
+    // A record above the user's access group with no reference gets "User has no access to this group.".
+    // Admins and the project owner are not checked. See /database/access-restrictions.md
+    message: "User has no access to this group. A record above your access group must reference a record you were granted, and stay at or below that record's access group.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // The same, when the referenced record is private.
+    message: "User has no access to this group. A private record lends no access group: a record that references it can be at most your own access group, or private.";
 }
 |
 {
@@ -374,6 +390,22 @@ listPrivateRecordAccess(
 See [FetchOptions](/api-reference/data-types/README.md#fetchoptions)
 
 See [DatabaseResponse](/api-reference/data-types/README.md#databaseresponse)
+
+Only users with access to the data can list: the record's uploader, the users it was shared with, the users with private access to the record it references, and the project owner and admins in access group `99`; with `user_id` alone, only that user, the project owner and admins in access group `99`. See [Listing Private Access Grants](/database/access-restrictions.md#listing-private-access-grants).
+
+#### Errors
+```ts
+{
+    code: "INVALID_REQUEST";
+    message: "User has no access to list the private access of this record.";
+}
+|
+{
+    code: "INVALID_REQUEST";
+    // user_id without record_id, naming another user
+    message: "User has no access to list the private access of this user.";
+}
+```
 
 
 ## deleteRecords
