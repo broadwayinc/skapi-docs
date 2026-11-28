@@ -98,3 +98,6 @@ You can freeze your database to prevent write operations by non-admin users.
 When the database is frozen, every user below access group `90` is blocked from performing write operations. Only read operations will be allowed. They are refused with `Database is frozen. Write access is denied for this user.`, and on a delete with `Database is frozen. Delete access is denied for this user.`
 
 Admins (access groups `90` ~ `99`) and the project owner still write as usual, so a frozen project stays manageable: they upload, update and delete records and files while it is frozen. See [Admin Permissions](/admin/permissions.md#a-frozen-database).
+## Realtime Limits
+
+How many realtime messages and notifications one user may send in a minute are set on the **Users** page, in the **Realtime Limits** card above the user list. Empty means no limit (the default), and `0` stops users from sending any. Admins and the project owner are never limited. See [Send Limits](/realtime/limits.md).

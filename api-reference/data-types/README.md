@@ -1186,6 +1186,7 @@ type WebSocketMessage = {
     meta?: Record<string, any>; // rtc:incoming: what the caller passed as `meta`
     sources?: string[]; // rtc:incoming: what the caller sends, e.g. ['camera', 'microphone'] or ['screen']
     sender?: string; // user_id of the sender
+    sender_type?: 'owner' | 'admin' | 'user' | null; // set by the server: who sent it. null on notices and connection events. See /realtime/trust.md
     sender_cid?: string; // scid of the sender
     sender_rid?: string; // group of the sender
     code?: 'USER_LEFT' | 'USER_DISCONNECTED' | 'USER_JOINED' | null; // code for notice messeges

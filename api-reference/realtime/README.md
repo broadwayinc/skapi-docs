@@ -41,6 +41,10 @@ postRealtime(
 ): Promise<{ type: 'success', message: 'Message sent.' }>
 ```
 
+The receiver gets the message with `sender` and `sender_type` (`'owner' | 'admin' | 'user'`) set by the server, and a push notification with `sender` and `sender_type` as well. See [Trusting the Sender](/realtime/trust.md).
+
+A message over the project's [send limits](/realtime/limits.md) is refused by the server after the promise resolves: the sender's RealtimeCallback receives `{ type: 'error', message: 'Limit reached: a user can send 30 realtime messages a minute.' }` (or `This project does not allow users to send realtime messages.`). Over the notification limit the message is delivered without its notification. Admins and the project owner are never limited.
+
 #### Errors
 ```ts
 {
@@ -207,3 +211,5 @@ pushNotification(
   user_ids?: string | string[] // Up to 1000 users. Each gets it on every device they registered. Without it, every registered device of the project gets it.
 ): Promise<"SUCCESS: Notification sent.">
 ```
+
+The push reaches each device as `{ title, body, sender, sender_type }`: `sender` is your user ID and `sender_type` is `'owner'` or `'admin'`, both set by the server. See [Trusting the Sender](/realtime/trust.md#push-notifications).

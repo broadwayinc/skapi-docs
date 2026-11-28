@@ -1,6 +1,18 @@
 # Version History
 
-### Current version: 2.7.0
+### Current version: 2.8.0
+
+**2.8.0**
+
+New:
+
+- **`sender_type` on realtime messages.** The RealtimeCallback now receives `sender_type`: `'owner'` (the project owner), `'admin'` (access group `90` to `99`) or `'user'`, on `"private"`, `"message"` and `"rtc:incoming"`. It is set by the server from the sender's login, so an app can show an admin's message as official and know no user can imitate it. See [Trusting the Sender](/realtime/trust.md).
+
+**Server changes, for every SDK version**
+
+- **Push notifications say who sent them.** Every push now carries `sender` and `sender_type`, set by the server: the sender's user ID with `'owner'` or `'admin'` from `pushNotification()`, `'owner'`, `'admin'` or `'user'` from a `postRealtime()` notification, and the project ID with `'service'` for notifications from records. A service worker can style, trust or mute them by sender. See [Trusting the Sender](/realtime/trust.md#push-notifications).
+- **Realtime send limits.** The project owner can limit how many realtime messages and how many notifications each user sends in a minute, on the **Users** page of the dashboard. Empty means no limit (the default) and `0` stops users from sending any. Admins and the owner are never limited. A refused message reaches the sender's RealtimeCallback as an `error`. See [Send Limits](/realtime/limits.md).
+- **A realtime message must come from a login of the same project.** The server used to accept a valid login of another project in the same region, so its user could message this project's users. Such a message is now refused with `Invalid token.`
 
 **Server changes of 2026-11-25, for every SDK version**
 

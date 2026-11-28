@@ -119,6 +119,8 @@ export let method_ref = [
             { text: 'Realtime Groups', link: '/realtime/group.md' },
             { text: 'WebRTC', link: '/realtime/webRTC.md' },
             { text: 'Notifications', link: '/notification/send-notifications.md' },
+            { text: 'Trusting the Sender', link: '/realtime/trust.md' },
+            { text: 'Send Limits', link: '/realtime/limits.md' },
         ]
     },
     // {

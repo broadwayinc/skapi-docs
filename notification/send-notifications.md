@@ -176,6 +176,25 @@ skapi.postRealtime(
 ).then(res => console.log(res));
 ```
 
+### What the Recipient Receives
+
+Every push notification reaches the service worker as JSON with `title` and `body`, plus two fields the server sets from the sender's login, which the sender cannot change:
+
+```ts
+{
+    title: string;
+    body: string;
+    sender: string;      // the sender's user ID, or the project ID when sender_type is "service"
+    sender_type: 'owner' | 'admin' | 'user' | 'service';
+}
+```
+
+A notification sent with `postRealtime()` arrives with the sender's user ID and `"user"`, or `"admin"` / `"owner"` when an admin or the owner sent it. `title` and `body` are written by the sender. Use `sender_type` to style or filter notifications, for example to mark the ones from staff, which no user can imitate. See [Trusting the Sender](/realtime/trust.md#push-notifications).
+
+### Notification Limits
+
+The project owner can limit how many notifications each user sends in a minute, or stop users from sending any. Over the limit the realtime message is still delivered, without its notification, and the sender's RealtimeCallback receives an `error` saying why. A notification counts only when it is sent: without `config.always`, one is sent only to a recipient who is not connected. Admins and the project owner are never limited. See [Send Limits](/realtime/limits.md).
+
 ## Notifications from Records
 
 Users can also be notified about records: when a user they subscribed to posts a record with `table.subscription.notify_subscribers`, or when someone references a record posted with `table.subscription.notify_referencing_records`. The subscriber turns these on with `get_notified: true` in [`subscribe()`](/api-reference/database/README.md#subscribe) and registers the device as shown above. See [Subscription notifications](/database/subscription.md#notifications) for who is notified and when.
@@ -191,8 +210,12 @@ These push messages carry the record beside `title` and `body`:
     table: string; // Table name of the new record.
     user_id: string; // User who posted the new record.
     reference?: string; // Only for "reference": the record that was referenced.
+    sender: string; // The project ID: Skapi sent it, not a user.
+    sender_type: "service";
 }
 ```
+
+Everything but `title` and `body` is set by the server. The uploader can choose the `title` and `body` of a `"record"` notification.
 
 Your service worker can use them to open the record when the notification is clicked. For example, with a page `/record.html?id=...` in your app:
 
@@ -232,6 +255,8 @@ self.addEventListener('notificationclick', function(event) {
 Admins can use the [`pushNotification()`](/api-reference/realtime/README.md#pushnotification) method to send notifications to users.
 **Only admins** can use this method to send notifications to **all** users.
 You can also target a specific user or multiple users by providing their IDs, up to 1000 per call. Each of them gets the notification on every device they registered. If no user IDs are specified, the notification will be sent to all users who have subscribed to notifications in your system.
+
+The notification arrives with `sender` (the admin's user ID) and `sender_type` (`"admin"`, or `"owner"` for the project owner), set by the server, so the recipient's service worker can tell it apart from a notification any user could send. See [Trusting the Sender](/realtime/trust.md#push-notifications).
 
 ### Steps:
 1. Call [`pushNotification()`](/api-reference/realtime/README.md#pushnotification) with the title and body.

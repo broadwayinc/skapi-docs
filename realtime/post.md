@@ -68,6 +68,7 @@ let RealtimeCallback = (rt) => {
             "msg": "Hello World!",
         },
         "sender": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "sender_type": "user",
         "sender_cid": "cid:xx-xxxxxxxxxxxx=",
         "sender_rid": null,
         "code": null
@@ -77,3 +78,9 @@ let RealtimeCallback = (rt) => {
 
 skapi.connectRealtime(RealtimeCallback);
 ```
+
+`sender` and `sender_type` are set by the server from the sender's login, so the receiver can rely on them: `sender_type` is `"owner"`, `"admin"` (access group `90` to `99`) or `"user"`. What is inside `message` is the sender's own. See [Trusting the Sender](/realtime/trust.md).
+
+## Send Limits
+
+The project owner can limit how many realtime messages each user sends in a minute, or stop users from sending any. A message over the limit is not delivered, and the sender's RealtimeCallback receives an `error` saying why. Admins and the project owner are never limited. See [Send Limits](/realtime/limits.md).

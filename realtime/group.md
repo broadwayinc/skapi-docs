@@ -80,6 +80,7 @@ let RealtimeCallback = (rt) => {
             "msg": "Hello World!",
         },
         "sender": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "sender_type": "user", // set by the server: "owner", "admin" or "user"
         "sender_cid": "cid:xx-xxxxxxxxxxxx=",
         "sender_rid": "HelloWorld",
         "code": null
@@ -95,7 +96,7 @@ skapi.connectRealtime(RealtimeCallback);
 When a group is both big and busy, the server sends its messages together to save traffic. This starts when the number of members times the messages sent in the same second goes over 500, for example 300 members and 2 messages in one second, or 10 members and 51 messages.
 
 - The first message goes out at once. The ones that follow are held for a moment and sent together. The wait is 1 second for every 2,000 members, and at least a tenth of a second: 100 milliseconds in a group of up to 200 members, 1 second at 2,000, 5 seconds at 10,000.
-- Your callback still receives each message on its own, in the order they were sent, with the same `type`, `message`, `sender`, `sender_cid` and `sender_rid`. Nothing in your code needs to change.
+- Your callback still receives each message on its own, in the order they were sent, with the same `type`, `message`, `sender`, `sender_type`, `sender_cid` and `sender_rid`. Nothing in your code needs to change.
 - A group under that line is never held, so a small group that sends now and then gets every message at once, as before.
 - SDK versions before 2.2.23 cannot read grouped messages. They keep receiving each message on its own.
 

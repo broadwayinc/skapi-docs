@@ -31,6 +31,7 @@ let RealtimeCallback = (rt) => {
       connectRTC?: (params: RTCReceiverParams, callback: (e: RTCEvent) => void) => Promise<RTCResolved>; // Accept incoming RTC calls.
       hangup?: () => void; // Reject incoming RTC connection.
       sender?: string; // user_id of the sender
+      sender_type?: 'owner' | 'admin' | 'user' | null; // who sent it, set by the server
       sender_cid?: string; // scid of the sender
       sender_rid?: string; // group of the sender
       code?: 'USER_LEFT' | 'USER_DISCONNECTED' | 'USER_JOINED' | null; // code for notice messages
@@ -67,6 +68,7 @@ When the callback runs, it receives a message object with the following properti
 
 -   `message` is the data passed from the server. It can be any JSON data.
 -   `sender` is the user ID of the message sender. It is available when `type` is "message", "private", or "notice". For "notice" events it carries the user ID of the user who joined, left, or was disconnected.
+-   `sender_type` says who sent the message: `"owner"` (the project owner), `"admin"` (access group `90` to `99`) or `"user"`. It is set by the server from the sender's login, never by the sender, so your app can rely on it, for example to show an admin badge. It is available when `type` is "message", "private" or "rtc:incoming", and `null` otherwise. See [Trusting the Sender](/realtime/trust.md).
 -   `sender_cid` is the connection ID of the message sender. It can be used to track the sender's connected device.
 -   `sender_rid` is the group name of the received message.
 -   `code` is a string identifier for notice messages.
